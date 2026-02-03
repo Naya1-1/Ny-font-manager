@@ -1,0 +1,456 @@
+<div class="inline-drawer" id="nytw_settings_root">
+    <div class="inline-drawer-toggle inline-drawer-header">
+        <b>Ny字体管理器</b>
+        <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
+    </div>
+    <div class="inline-drawer-content">
+        <div class="nytw-settings-container">
+            <!-- 左侧导航栏 -->
+            <div class="nytw-sidebar">
+                <div class="nytw-tab-item active" data-tab="settings">字体设置</div>
+                <div class="nytw-tab-item nytw-tab-item--display" id="nytw_tab_item_display" data-tab="display">显示设置</div>
+                <div class="nytw-tab-item" data-tab="import">导入字体</div>
+                <div class="nytw-tab-item" data-tab="help">使用说明</div>
+            </div>
+
+            <!-- 右侧内容区域 -->
+            <div class="nytw-content-area">
+                
+                <!-- Tab 1: 字体设置 -->
+                <div id="nytw_tab_settings" class="nytw-tab-pane active">
+                    <!-- 总开关 (带折叠效果) -->
+                    <div class="flex-container alignItemsCenter nytw-row nytw-row--disclosure nytw-main-toggle nytw-importer-toggle" id="nytw_fonts_enabled_row">
+                        <!-- 流光动画边框元素 -->
+                        <span class="nytw-border-anim top"></span>
+                        <span class="nytw-border-anim right"></span>
+                        <span class="nytw-border-anim bottom"></span>
+                        <span class="nytw-border-anim left"></span>
+
+                        <input type="checkbox" id="nytw_fonts_enabled" style="display: none;" />
+                        <label class="nytw-disclosure-label" id="nytw_fonts_enabled_label_container">
+                            <!-- 图标容器 -->
+                            <div class="nytw-icon-stack">
+                                <i class="fa-solid fa-chevron-right nytw-disclosure-icon nytw-static-icon" aria-hidden="true"></i>
+                                <div class="nytw-running-icon-wrapper">
+                                    <i class="fa-solid fa-check nytw-running-icon" aria-hidden="true"></i>
+                                </div>
+                            </div>
+                            
+                            <span id="nytw_fonts_enabled_text">点击启用字体覆盖</span>
+                        </label>
+                    </div>
+
+                    <!-- 主设置面板 (折叠区域) -->
+                    <div id="nytw_main_settings_panel" class="nytw-collapsible" aria-hidden="true">
+                        
+                        <div style="margin-top: 10px;"></div>
+
+                        <!-- 正文 -->
+                        <div class="flex-container alignItemsCenter nytw-row">
+                            <label for="nytw_body_font" class="nytw-label">正文字体</label>
+                            <div class="nytw-input-wrapper">
+                                <input id="nytw_body_font"
+                                    type="text"
+                                    class="text_pole nytw-input nytw-font-input"
+                                    placeholder="（留空表示默认）"
+                                    autocomplete="off" />
+                                <div class="nytw-font-picker-popup" id="nytw_body_font_popup"></div>
+                            </div>
+                            <button id="nytw_body_font_clear"
+                                    class="menu_button nytw-icon-button"
+                                    type="button"
+                                    title="清除"
+                                    aria-label="清除">
+                                <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                            </button>
+                        </div>
+
+                        <!-- 对话独立字体 -->
+                        <div class="flex-container alignItemsCenter nytw-row">
+                            <label for="nytw_dialogue_font" class="nytw-label">对话字体</label>
+                            <div class="nytw-input-wrapper">
+                                <input id="nytw_dialogue_font"
+                                    type="text"
+                                    class="text_pole nytw-input nytw-font-input"
+                                    placeholder="（留空表示默认）"
+                                    autocomplete="off" />
+                                <div class="nytw-font-picker-popup" id="nytw_dialogue_font_popup"></div>
+                            </div>
+                            <button id="nytw_dialogue_font_clear"
+                                    class="menu_button nytw-icon-button"
+                                    type="button"
+                                    title="清除"
+                                    aria-label="清除">
+                                <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                            </button>
+                        </div>
+
+                        <!-- 按语言设置字体 (折叠面板) -->
+                        <div id="nytw_locale_font_toggle" class="flex-container alignItemsCenter nytw-row nytw-row--disclosure">
+                            <input type="checkbox" id="nytw_locale_font_enabled" style="display: none;" />
+                            <label class="nytw-disclosure-label">
+                                <i class="fa-solid fa-chevron-right nytw-disclosure-icon" aria-hidden="true"></i>
+                                按语言设置字体 (多语言混合)
+                            </label>
+                        </div>
+
+                        <div id="nytw_locale_font_panel" class="nytw-collapsible" aria-hidden="true">
+                            <div id="nytw_locale_list" class="nytw-locale-list">
+                                <!-- 动态生成的列表项 -->
+                            </div>
+                            <div class="nytw-row nytw-row--nested nytw-add-locale-row">
+                                <button id="nytw_add_locale_btn" class="nytw-dashed-btn" type="button">
+                                    <i class="fa-solid fa-plus"></i> 添加语言规则
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 自定义包裹字符字体 (折叠面板) -->
+                        <div id="nytw_custom_font_wrap_toggle" class="flex-container alignItemsCenter nytw-row nytw-row--disclosure">
+                            <input type="checkbox" id="nytw_custom_font_wrap_enabled" style="display: none;" />
+                            <label class="nytw-disclosure-label">
+                                <i class="fa-solid fa-chevron-right nytw-disclosure-icon" aria-hidden="true"></i>
+                                启用自定义包裹字符字体
+                            </label>
+                        </div>
+
+                        <div id="nytw_custom_font_wrap_panel" class="nytw-collapsible" aria-hidden="true">
+                            <!-- 自定义字体输入 -->
+                            <div class="flex-container alignItemsCenter nytw-row nytw-row--nested">
+                                <label for="nytw_custom_font" class="nytw-label">独立字体</label>
+                                <div class="nytw-input-wrapper">
+                                    <input id="nytw_custom_font"
+                                        type="text"
+                                        class="text_pole nytw-input nytw-font-input"
+                                        placeholder="（留空表示默认）"
+                                        autocomplete="off" />
+                                    <div class="nytw-font-picker-popup" id="nytw_custom_font_popup"></div>
+                                </div>
+                                <button id="nytw_custom_font_clear"
+                                        class="menu_button nytw-icon-button"
+                                        type="button"
+                                        title="清除"
+                                        aria-label="清除">
+                                    <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                                </button>
+                            </div>
+
+                            <!-- 包裹符号 -->
+                            <div class="flex-container alignItemsCenter nytw-row nytw-row--nested nytw-row--symbols">
+                                <label class="nytw-label">包裹符号</label>
+                                <div class="nytw-multi-input-wrapper">
+                                    <input id="nytw_custom_font_open"
+                                           type="text"
+                                           class="text_pole nytw-token"
+                                           placeholder="（起始）" />
+                                    <span class="nytw-arrow" aria-hidden="true">→</span>
+                                    <input id="nytw_custom_font_close"
+                                           type="text"
+                                           class="text_pole nytw-token"
+                                           placeholder="（结束）" />
+                                    <button id="nytw_custom_font_symbols_clear"
+                                            class="menu_button nytw-icon-button"
+                                            type="button"
+                                            title="清除"
+                                            aria-label="清除">
+                                        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="nytw-help nytw-help--nested">
+                                提示：例如设置开始为 <code>【</code>，结束为 <code>】</code>，则 <code>【这段文字】</code> 会使用该字体。
+                            </div>
+                        </div>
+                        
+                    </div> <!-- End of nytw_main_settings_panel -->
+
+                    <!-- 聊天外部字体导入器开关 -->
+                    <div class="flex-container alignItemsCenter nytw-row nytw-row--disclosure nytw-main-toggle nytw-importer-toggle" id="nytw_chat_font_import_row">
+                        <!-- 流光动画边框元素 -->
+                        <span class="nytw-border-anim top"></span>
+                        <span class="nytw-border-anim right"></span>
+                        <span class="nytw-border-anim bottom"></span>
+                        <span class="nytw-border-anim left"></span>
+
+                        <input type="checkbox" id="nytw_chat_font_import_enabled" style="display: none;" />
+                        <label class="nytw-disclosure-label" id="nytw_chat_font_import_label_container">
+                            <!-- 图标容器 -->
+                            <div class="nytw-icon-stack">
+                                <i class="fa-solid fa-chevron-right nytw-disclosure-icon nytw-static-icon" aria-hidden="true"></i>
+                                <div class="nytw-running-icon-wrapper">
+                                    <i class="fa-solid fa-circle-notch fa-spin nytw-running-icon" aria-hidden="true"></i>
+                                </div>
+                            </div>
+                            
+                            <span id="nytw_chat_font_import_text">点击开启外部聊天字体导入</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Tab 2: 显示设置 -->
+                <div id="nytw_tab_display" class="nytw-tab-pane">
+
+                    <div class="nytw-display-setting-card">
+                        <div class="nytw-card-header">
+                            <div class="nytw-card-icon">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            </div>
+                            <div class="nytw-card-info">
+                                <div class="nytw-card-title">流式输出渲染模式</div>
+                                <div class="nytw-card-desc">决定所设置的文字字体显示时间</div>
+                            </div>
+                        </div>
+                        
+                        <div class="nytw-segmented-control" id="nytw_render_mode_control">
+                            <div class="nytw-segment-option" data-value="buffer">
+                                <i class="fa-solid fa-bolt"></i> <span class="name">实时显示</span>
+                            </div>
+                            <div class="nytw-segment-option" data-value="defer">
+                                <i class="fa-solid fa-hourglass-end"></i> <span class="name">结束后处理</span>
+                            </div>
+                        </div>
+
+                        <div id="nytw_stream_anim_section">
+                            <div class="nytw-card-divider"></div>
+
+                            <div class="nytw-card-section">
+                                <div class="nytw-card-section-header">
+                                    <div class="nytw-card-section-title">
+                                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                                        <span>流式动画效果</span>
+                                    </div>
+                                    <div class="nytw-card-section-desc">基于实时显示内容的轻量动画（低性能设备友好）</div>
+                                </div>
+
+                                <div class="nytw-card-section-body">
+                                    <div class="nytw-anim-stepper" id="nytw_anim_stepper">
+                                    <button class="nytw-stepper-btn prev" type="button"><i class="fa-solid fa-chevron-left"></i></button>
+                                    <div class="nytw-stepper-content" id="nytw_anim_preview_container">
+                                        <!-- Content injected via JS -->
+                                    </div>
+                                    <button class="nytw-stepper-btn next" type="button"><i class="fa-solid fa-chevron-right"></i></button>
+                                </div>
+                                <input type="hidden" id="nytw_stream_anim_effect" />
+
+                                <div class="nytw-creative-row" id="nytw_stream_anim_speed_row">
+                                    <div class="nytw-creative-label"><i class="fa-solid fa-gauge-high"></i> 打印速度</div>
+                                    <div class="nytw-range-wrapper">
+                                        <i class="fa-solid fa-tortoise slow-icon"></i>
+                                        <input id="nytw_stream_anim_speed" type="range" min="10" max="80" step="2" class="nytw-creative-range" />
+                                        <i class="fa-solid fa-person-running fast-icon"></i>
+                                    </div>
+                                    <div class="nytw-speed-display" id="nytw_stream_anim_speed_value"></div>
+                                </div>
+
+                                <div class="nytw-creative-row" id="nytw_stream_anim_cursor_row">
+                                    <div class="nytw-creative-label"><i class="fa-solid fa-terminal"></i> 输入光标</div>
+                                    <div class="nytw-cursor-toggle-wrapper">
+                                        <input id="nytw_stream_anim_cursor" type="checkbox" style="display:none" />
+                                        <label for="nytw_stream_anim_cursor" class="nytw-cursor-btn">
+                                            <span class="cursor-icon">_</span>
+                                            <span class="cursor-text">启用光标</span>
+                                            <span class="cursor-status">OFF</span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="nytw-stream-anim-hint" id="nytw_stream_anim_hint"></div>
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+
+                    <!-- Hidden select for JS compatibility -->
+                    <select id="nytw_stream_render_mode_display" style="display: none;">
+                        <option value="defer">输出结束后显示</option>
+                        <option value="buffer">实时显示</option>
+                    </select>
+                </div>
+
+                <!-- Tab 3: 导入管理 -->
+                <div id="nytw_tab_import" class="nytw-tab-pane">
+
+                    <div class="nytw-section-title">Web 字体 (CSS)</div>
+                    <div class="flex-container alignItemsCenter nytw-row">
+                        <label for="nytw_font_css_url" class="nytw-label">链接</label>
+                        <input id="nytw_font_css_url"
+                               type="text"
+                               class="text_pole nytw-input nytw-input--url"
+                               placeholder="（粘贴 CSS 链接，例如 Google Fonts）" />
+                    </div>
+
+                    <div class="nytw-section-title">本地字体文件</div>
+                    <div class="flex-container alignItemsCenter nytw-row">
+                        <label class="nytw-label">文件</label>
+                        <div style="flex: 1; display: flex; gap: 5px; align-items: center;">
+                            <input id="nytw_font_file_display"
+                                   type="text"
+                                   class="text_pole nytw-input"
+                                   placeholder="（未选择文件）"
+                                   readonly
+                                   style="cursor: default; opacity: 0.8;" />
+                            <input id="nytw_font_file"
+                                   type="file"
+                                   accept=".woff2,.woff,.ttf,.otf"
+                                   style="display: none;" />
+                            <button id="nytw_font_file_btn" class="menu_button" type="button" style="width: auto;">浏览...</button>
+                        </div>
+                    </div>
+
+
+                    <div class="nytw-row nytw-row--nested nytw-import-actions-row">
+                        <button id="nytw_import_font" class="nytw-dashed-btn" type="button">
+                            <i class="fa-solid fa-file-import"></i> 导入字体
+                        </button>
+                    </div>
+
+                    <hr style="opacity: 0.1; margin: 3px 0;" />
+                    
+                    <div class="flex-container alignItemsCenter nytw-row nytw-row--disclosure nytw-main-toggle" id="nytw_imported_fonts_toggle">
+                        <label class="nytw-disclosure-label">
+                            <i class="fa-solid fa-chevron-right nytw-disclosure-icon" aria-hidden="true"></i>
+                            已导入字体
+                        </label>
+                    </div>
+                    <div id="nytw_imported_fonts_panel" class="nytw-collapsible" aria-hidden="true">
+                        <div id="nytw_imported_fonts" class="nytw-imported-fonts"></div>
+                    </div>
+                </div>
+
+                <!-- Tab 4: 使用说明 -->
+                <div id="nytw_tab_help" class="nytw-tab-pane">
+                    
+                    <!-- Group 0: 核心功能启用说明 (特别样式) -->
+                    <div class="nytw-core-help-wrapper">
+                        <div class="flex-container alignItemsCenter nytw-row nytw-row--disclosure nytw-help-toggle is-open" id="nytw_core_help_toggle">
+                            <label class="nytw-disclosure-label">
+                                <i class="fa-solid fa-circle-info nytw-disclosure-icon" aria-hidden="true"></i>
+                                <span class="nytw-core-title">如何启用字体功能</span>
+                            </label>
+                        </div>
+                        <div class="nytw-collapsible is-open" aria-hidden="true">
+                            <div class="nytw-help nytw-help--core">
+                                当功能开关处于“折叠”状态时，对应功能为关闭状态。<br/><br/>
+                                1. 点击 <strong>“点击启用字体覆盖”</strong> 开关，卡片展开，自定义功能启用。<br/>
+                                2. 点击 <strong>“点击开启外部聊天字体导入”</strong> 开关，，卡片展开，加载聊天记录中的网络字体功能启用。<br/><br/>
+                                <i class="fa-solid fa-lightbulb"></i> 开启后开关将显示为流光动画状态。
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Group 1: 字体设置 -->
+                    <div class="flex-container alignItemsCenter nytw-row nytw-row--disclosure nytw-help-toggle">
+                        <label class="nytw-disclosure-label">
+                            <i class="fa-solid fa-chevron-right nytw-disclosure-icon" aria-hidden="true"></i>
+                            字体设置
+                        </label>
+                    </div>
+                    <div class="nytw-collapsible" aria-hidden="true">
+                        <div class="nytw-help">
+                            <strong>正文字体：</strong><br/>
+                            设置聊天消息的全局默认字体。留空则使用主题默认字体。<br/><br/>
+                            <strong>对话字体：</strong><br/>
+                            设置引号内对话内容的专用字体。支持中文引号（“ ”）、英文引号（" "）等。<br/><br/>
+                            <strong>优先级：</strong><br/>
+                            对话字体 > 正文字体。
+                        </div>
+                    </div>
+
+                    <!-- Group 2: 按语言设置字体 -->
+                    <div class="flex-container alignItemsCenter nytw-row nytw-row--disclosure nytw-help-toggle">
+                        <label class="nytw-disclosure-label">
+                            <i class="fa-solid fa-chevron-right nytw-disclosure-icon" aria-hidden="true"></i>
+                            按语言设置字体
+                        </label>
+                    </div>
+                    <div class="nytw-collapsible" aria-hidden="true">
+                        <div class="nytw-help">
+                            在此处配置不同语言/脚本（如日文、韩文、英文、数字等）使用的特定字体。<br/><br/>
+                            <strong>特性：</strong><br/>
+                            支持在同一句子里混排多种字体。<br/><br/>
+                            <strong>优先级：</strong><br/>
+                            按语言设置 > 对话字体 > 正文字体。<br/><br/>
+                            <strong>提示：</strong><br/>
+                            数字/标点若未单独配置，会自动跟随前一段语言的字体（减少视觉断裂）。
+                        </div>
+                    </div>
+
+                    <!-- Group 3: 自定义包裹字符字体 -->
+                    <div class="flex-container alignItemsCenter nytw-row nytw-row--disclosure nytw-help-toggle">
+                        <label class="nytw-disclosure-label">
+                            <i class="fa-solid fa-chevron-right nytw-disclosure-icon" aria-hidden="true"></i>
+                            自定义包裹字符字体
+                        </label>
+                    </div>
+                    <div class="nytw-collapsible" aria-hidden="true">
+                        <div class="nytw-help">
+                            为被特定符号包裹的文字设置独立字体。<br/><br/>
+                            <strong>用法：</strong><br/>
+                            设定起始符号（如 <code>【</code>）和结束符号（如 <code>】</code>）。<br/>
+                            聊天中被这些符号包裹的内容将应用指定字体。<br/><br/>
+                            <strong>优先级：</strong><br/>
+                            自定义包裹 > 按语言设置 > 对话字体 > 正文字体。
+                        </div>
+                    </div>
+
+                    <!-- Group 4: 聊天外部字体导入 -->
+                    <div class="flex-container alignItemsCenter nytw-row nytw-row--disclosure nytw-help-toggle">
+                        <label class="nytw-disclosure-label">
+                            <i class="fa-solid fa-chevron-right nytw-disclosure-icon" aria-hidden="true"></i>
+                            聊天外部字体导入
+                        </label>
+                    </div>
+                    <div class="nytw-collapsible" aria-hidden="true">
+                        <div class="nytw-help">
+                            自动扫描并加载聊天记录与正则脚本中的 CSS 字体链接。<br/><br/>
+                            <strong>作用：</strong><br/>
+                            解决酒馆（SillyTavern）净化样式导致消息内的 <code>@import</code> 字体失效的问题。<br/><br/>
+                            <strong>支持格式：</strong><br/>
+                            CSS <code>@import</code> 语句或 <code>&lt;style&gt;</code> 标签内的引用。
+                        </div>
+                    </div>
+
+                    <!-- Group: 显示设置 -->
+                    <div class="flex-container alignItemsCenter nytw-row nytw-row--disclosure nytw-help-toggle">
+                        <label class="nytw-disclosure-label">
+                            <i class="fa-solid fa-chevron-right nytw-disclosure-icon" aria-hidden="true"></i>
+                            显示设置
+                        </label>
+                    </div>
+                    <div class="nytw-collapsible" aria-hidden="true">
+                        <div class="nytw-help">
+                            <strong>实时显示：</strong><br/>
+                            在文本生成过程中即时应用字体。体验更流畅。<br/><br/>
+                            <strong>结束后处理：</strong><br/>
+                            待整段回复生成完毕后统一应用字体。<br/><br/>
+                            <i class="fa-solid fa-triangle-exclamation"></i> “实时显示”如遇兼容问题（如字体闪烁、排版错乱），请切回“结束后处理”。
+                        </div>
+                    </div>
+
+                    <!-- Group 5: 导入字体 -->
+                    <div class="flex-container alignItemsCenter nytw-row nytw-row--disclosure nytw-help-toggle">
+                        <label class="nytw-disclosure-label">
+                            <i class="fa-solid fa-chevron-right nytw-disclosure-icon" aria-hidden="true"></i>
+                            导入字体
+                        </label>
+                    </div>
+                    <div class="nytw-collapsible" aria-hidden="true">
+                        <div class="nytw-help">
+                            管理插件使用的额外字体资源。<br/><br/>
+                            <strong>Web 字体：</strong><br/>
+                            粘贴 CSS 链接（如 Google Fonts）进行导入。<br/><br/>
+                            <strong>本地文件：</strong><br/>
+                            上传 .woff2, .ttf, .otf 等字体文件。文件将存储在浏览器本地数据库中。<br/><br/>
+                            导入后可在字体选择器的下拉列表中找到这些字体。
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- 数据列表 (不再使用 list 属性，但保留数据结构供 JS 读取) -->
+            <!-- <datalist id="nytw_font_list"></datalist> -->
+        </div>
+    </div>
+</div>

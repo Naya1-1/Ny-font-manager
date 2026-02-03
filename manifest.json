@@ -1,0 +1,10 @@
+{
+  "display_name": "Ny字体管理器",
+  "loading_order": 55,
+  "requires": [],
+  "optional": [],
+  "js": "index.js",
+  "css": "style.css",
+  "author": "Ny",
+  "version": "1.1.2"
+}

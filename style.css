@@ -1,0 +1,1599 @@
+/* Ny Typewriter Settings Styles - Refined Dark Theme */
+
+/* --- Container & Layout --- */
+
+.nytw-settings-container {
+    display: flex;
+    gap: 0; /* 紧凑布局，消除间隙 */
+    /* height: 500px; */
+    height: auto;
+    min-height: 300px;
+    max-height: 580px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    overflow: hidden; /* 防止圆角溢出 */
+    border: 1px solid rgba(127, 127, 127, 0.15);
+    font-family: sans-serif; /* Ensure base font is clean */
+}
+
+/* --- Sidebar (Left Navigation) --- */
+
+.nytw-sidebar {
+    width: 40px; /* 窄侧边栏 */
+    background: rgba(0, 0, 0, 0.3);
+    border-right: 1px solid rgba(127, 127, 127, 0.1);
+    display: flex;
+    flex-direction: column;
+    padding-top: 10px;
+    flex-shrink: 0;
+}
+
+.nytw-tab-item {
+    writing-mode: vertical-lr; /* 竖排文字 */
+    text-orientation: mixed;
+    padding: 15px 8px; /* 增加点击区域 */
+    cursor: pointer;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.75);
+    transition: all 0.2s;
+    letter-spacing: 2px;
+    border-left: 3px solid transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    white-space: nowrap; /* 强制不换行，防止动画过程中布局错乱 */
+}
+
+.nytw-tab-item:hover {
+    color: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.nytw-tab-item.active {
+    color: #fff;
+    border-left-color: var(--smart-theme-color, #a8a8a8); /* 使用主题色或默认灰白 */
+    background: rgba(255, 255, 255, 0.08);
+    font-weight: 600;
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.2);
+}
+
+/* Display Settings tab: only visible when "字体覆盖" is enabled */
+.nytw-tab-item--display {
+    max-height: 120px;
+    overflow: hidden;
+    opacity: 1;
+    transform: translateY(0);
+    /* 优化：移除 all，指定具体属性。增加 opacity 延迟(0.15s)，等待高度撑开后再显示文字，彻底解决横版闪烁问题 */
+    transition: max-height 0.35s ease, padding 0.35s ease, opacity 0.2s ease 0.15s, transform 0.35s ease, background-color 0.2s, color 0.2s;
+    will-change: max-height, padding, opacity, transform;
+}
+
+.nytw-tab-item--display.is-collapsed {
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    /* 保留左右 padding 以维持宽度布局稳定性，防止横竖排重排 */
+    /* padding: 0; */ 
+    opacity: 0;
+    transform: translateY(-10px);
+    pointer-events: none;
+    /* 收起时 opacity 立即消失，无需 delay */
+    transition: max-height 0.35s ease, padding 0.35s ease, opacity 0.1s ease 0s, transform 0.35s ease, background-color 0.2s, color 0.2s;
+}
+
+/* 字体设置按钮的联动动画 */
+@keyframes nytw-tab-pulse {
+    0% { background-color: rgba(255, 255, 255, 0.05); }
+    50% { background-color: rgba(255, 255, 255, 0.15); text-shadow: 0 0 8px rgba(255, 255, 255, 0.4); }
+    100% { background-color: rgba(255, 255, 255, 0.05); }
+}
+
+.nytw-tab-anim {
+    animation: nytw-tab-pulse 0.5s ease-in-out;
+}
+
+
+/* --- Content Area (Right Panel) --- */
+
+.nytw-content-area {
+    flex: 1;
+    padding: 15px;
+    overflow-y: auto;
+    background: rgba(30, 30, 30, 0.4); /* 深色半透明背景 */
+    position: relative;
+}
+
+.nytw-tab-pane {
+    display: none;
+    flex-direction: column;
+    gap: 8px; /* 紧凑间距 */
+    animation: nytw-fade-in 0.2s ease-out;
+}
+
+.nytw-tab-pane.active {
+    display: flex;
+}
+
+@keyframes nytw-fade-in {
+    from { opacity: 0; transform: translateY(2px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- Rows & Inputs (Compact Design) --- */
+
+.nytw-settings-container .nytw-row {
+    display: flex; /* Flex is better for compact/adaptive than grid here */
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(127, 127, 127, 0.1);
+    border-radius: 4px; /* 小圆角 */
+    transition: background 0.2s;
+    position: relative;
+}
+
+.nytw-settings-container .nytw-row:focus-within {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(127, 127, 127, 0.3);
+}
+
+.nytw-settings-container .nytw-label {
+    width: 60px; /* 固定 Label 宽度 */
+    font-size: 12px;
+    opacity: 0.95;
+    white-space: nowrap;
+    text-align: right;
+    margin-right: 5px;
+    font-weight: 500;
+}
+
+.nytw-settings-container .nytw-input {
+    flex: 1;
+    height: 28px; /* 更矮的输入框 */
+    font-size: 13px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(127, 127, 127, 0.2);
+    border-radius: 3px;
+    padding: 0 6px;
+    color: #eee;
+}
+
+.nytw-settings-container .nytw-input:focus {
+    border-color: var(--smart-theme-color, #aaa);
+    outline: none;
+}
+
+.nytw-input::placeholder,
+.nytw-token::placeholder {
+    color: #cccccc; /* 浅灰色 */
+    opacity: 0.5;   /* 50% 透明度 */
+    font-style: italic;
+    font-size: 12px;
+}
+
+/* --- Input Wrapper & Custom Popup (Bubble) --- */
+
+.nytw-input-wrapper {
+    flex: 1;
+    position: relative;
+    display: flex;
+}
+
+/* 气泡选择框 */
+.nytw-font-picker-popup {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin-top: 5px;
+    z-index: 100;
+    
+    background: rgba(40, 40, 40, 0.85); /* 稍微深一点的背景 */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    
+    max-height: 200px;
+    overflow-y: auto;
+    
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-5px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    
+    display: flex;
+    flex-direction: column;
+    padding: 4px;
+}
+
+.nytw-font-picker-popup.is-open {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+
+.nytw-font-option {
+    padding: 6px 10px;
+    font-size: 13px;
+    cursor: pointer;
+    border-radius: 4px;
+    color: rgba(255, 255, 255, 0.8);
+    transition: background 0.15s;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.nytw-font-option:hover, .nytw-font-option.is-focused {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+.nytw-font-option-sub {
+    font-size: 11px;
+    opacity: 0.5;
+    margin-left: 8px;
+}
+
+.nytw-font-group-header {
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.4);
+    padding: 6px 10px 2px;
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    user-select: none;
+}
+
+.nytw-font-group-header:first-child {
+    margin-top: 0;
+    border-top: none;
+    padding-top: 4px;
+}
+
+/* Scrollbar for popup */
+.nytw-font-picker-popup::-webkit-scrollbar {
+    width: 4px;
+}
+.nytw-font-picker-popup::-webkit-scrollbar-track {
+    background: transparent;
+}
+.nytw-font-picker-popup::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+}
+
+/* --- Buttons --- */
+
+.nytw-icon-button {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    opacity: 0.5;
+    cursor: pointer;
+    border-radius: 3px;
+}
+
+.nytw-icon-button:hover {
+    opacity: 1;
+    background: rgba(200, 50, 50, 0.2); /* 红色警示背景 */
+    color: #ff6b6b;
+}
+
+.menu_button {
+    /* 继承全局样式但微调 */
+    padding: 4px 12px;
+    height: 30px;
+    font-size: 13px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* --- Custom Font Wrap Toggle & Main Toggle --- */
+
+.nytw-row--disclosure {
+    margin-top: 5px;
+    cursor: pointer;
+    justify-content: flex-start;
+}
+
+.nytw-disclosure-label {
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    flex: 1;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.nytw-disclosure-icon {
+    font-size: 10px;
+    opacity: 0.7;
+    transition: transform 0.2s;
+}
+
+/* Active state for disclosure rows */
+.nytw-row--disclosure.is-open {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.nytw-row--disclosure.is-open .nytw-disclosure-icon {
+    transform: rotate(90deg);
+}
+
+/* Main Toggle Special Styling */
+.nytw-main-toggle {
+    padding: 10px 10px; /* Slightly taller */
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(127, 127, 127, 0.2);
+    border-radius: 6px;
+    margin-bottom: 5px;
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    user-select: none;
+    overflow: hidden;
+}
+
+.nytw-main-toggle:hover {
+    background: rgba(0, 0, 0, 0.1);
+    border-color: rgba(0, 0, 0, 0.3);
+}
+
+.nytw-main-toggle .nytw-disclosure-label {
+    font-size: 14px; /* Larger text */
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.95);
+    transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), color 0.2s;
+}
+
+.nytw-main-toggle .nytw-disclosure-icon {
+    font-size: 12px;
+    margin-right: 4px;
+}
+
+.nytw-main-toggle.is-open {
+    background: rgba(160, 160, 160, 0.15); /* Grayish background to reduce brightness */
+    border-color: transparent;
+    border-radius: 24px;
+    animation: nytw-breathe-glow 9s infinite ease-in-out; /* Slower breathing (1/3 speed) */
+}
+
+.nytw-main-toggle.is-open .nytw-disclosure-label {
+    color: #fff;
+    transform: translateX(calc(35% - 2em));
+}
+
+@keyframes nytw-breathe-glow {
+    0%, 100% {
+        box-shadow: 0 0 4px rgba(255, 255, 255, 0.1);
+    }
+    50% {
+        box-shadow: 0 0 12px rgba(255, 255, 255, 0.25);
+    }
+}
+
+/* --- Collapsible Panel --- */
+
+.nytw-collapsible {
+    border: 1px solid rgba(127, 127, 127, 0.1);
+    border-top: none;
+    background: rgba(0, 0, 0, 0.15);
+    margin-top: -1px; /* 连接 Toggle */
+    border-radius: 0 0 4px 4px;
+    padding: 0 10px;
+    
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-height 0.3s ease, opacity 0.2s, padding 0.3s, overflow 0s 0s;
+}
+
+.nytw-collapsible.is-open {
+    max-height: 2000px; /* Increased to accommodate longer lists */
+    opacity: 1;
+    padding: 10px; /* 展开后的 Padding */
+    overflow: visible; /* 允许内部气泡溢出 */
+    transition: max-height 0.4s ease, opacity 0.2s, padding 0.3s, overflow 0s 0.3s;
+}
+
+/* Nested collapsible fix: if we have nested panels, we need to handle overflow carefully.
+   However, for the font popups to show outside, we need overflow visible on parent.
+   But transition requires hidden.
+   
+   Solution: After transition ends, set overflow to visible (handled in JS usually, or use a large max-height).
+   For simple CSS: 
+*/
+.nytw-collapsible.is-open {
+   overflow: visible; 
+}
+/* Wait, transition max-height requires overflow hidden during transition. 
+   If we set overflow visible immediately, the animation breaks. 
+   Usually we need a JS event listener 'transitionend' to set overflow visible.
+   Or we can use z-index hacks.
+   
+   Actually, the popup is position:absolute inside a relative wrapper. 
+   If the wrapper is inside an overflow:hidden container, the popup will be clipped.
+   
+   Let's try to keep overflow visible for open state, but we might lose the smooth height animation partially if not careful.
+   Actually, for the "Drawer" effect, we want the drawer to slide out.
+   
+   Let's use a slightly different approach for the collapsibles that contain popups.
+*/
+
+/* --- Nested Rows --- */
+
+.nytw-settings-container .nytw-row.nytw-row--nested {
+    border: none;
+    background: transparent;
+    padding: 4px 0;
+}
+.nytw-settings-container .nytw-row.nytw-row--nested .nytw-label {
+    opacity: 0.85;
+}
+
+/* --- Multi-Input (Symbols) --- */
+
+.nytw-multi-input-wrapper {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.nytw-token {
+    flex: 1;
+    min-width: 40px;
+    text-align: center;
+}
+
+.nytw-arrow {
+    font-size: 12px;
+    opacity: 0.5;
+}
+
+/* --- Help Text --- */
+
+.nytw-core-help-wrapper {
+    margin-bottom: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%);
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.nytw-core-help-wrapper .nytw-row--disclosure {
+    background: rgba(255, 255, 255, 0.03);
+    margin-top: 0;
+    border: none;
+    border-radius: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 10px 12px;
+}
+
+.nytw-core-help-wrapper .nytw-disclosure-label {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.nytw-core-title {
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    background: linear-gradient(90deg, #fff, #bbb);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+}
+
+.nytw-core-help-wrapper .nytw-collapsible {
+    background: transparent;
+    border: none;
+    margin-top: 0;
+    padding: 0;
+}
+
+.nytw-help--core {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    padding: 15px;
+    font-size: 13px;
+    line-height: 1.7;
+    margin: 0;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.nytw-help--core strong {
+    color: #fff;
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 0 4px;
+    border-radius: 3px;
+    margin: 0 2px;
+}
+
+.nytw-help--core i {
+    color: rgba(255, 255, 255, 0.8);
+    margin-right: 4px;
+}
+
+.nytw-help {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.45);
+    padding: 6px 10px;
+    background: rgba(0, 0, 0, 0.15);
+    border-left: 3px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0 4px 4px 0;
+    line-height: 1.4;
+    font-style: italic;
+    margin-top: 4px;
+}
+.nytw-help code {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 0 3px;
+    border-radius: 2px;
+    font-family: monospace;
+}
+
+/* --- Import Section --- */
+
+.nytw-section-title {
+    font-size: 12px;
+    font-weight: bold;
+    color: rgba(255, 255, 255, 0.85);
+    margin: 10px 0 4px 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.nytw-section-title:first-child {
+    margin-top: 0;
+}
+
+.nytw-import-actions-row {
+    justify-content: center;
+    padding: 6px 0 !important;
+    margin-top: 5px;
+    background: transparent !important;
+    border: none !important;
+}
+
+.nytw-import-actions-row .nytw-dashed-btn {
+    height: 30px;
+    font-size: 12px;
+}
+
+.nytw-imported-fonts {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.nytw-font-row {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(127, 127, 127, 0.1);
+    border-radius: 6px;
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column; /* 垂直排列 */
+    gap: 8px;
+}
+
+.nytw-font-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.nytw-font-meta {
+    flex: 1;
+    overflow: hidden;
+    margin-right: 10px;
+}
+
+.nytw-font-actions {
+    display: flex;
+    flex-wrap: wrap; /* 允许换行 */
+    gap: 6px;
+    width: 100%;
+}
+
+.nytw-font-actions .menu_button {
+    flex: 1; /* 均分宽度 */
+    min-width: 80px; /* 最小宽度，防止太窄 */
+    text-align: center;
+    justify-content: center;
+}
+
+/* Specific styling for delete button in header */
+.nytw-font-delete {
+    height: 24px;
+    padding: 0 8px;
+    font-size: 11px;
+    background: transparent;
+    color: #ff8888;
+    border: 1px solid rgba(200, 50, 50, 0.3);
+    opacity: 0.6;
+}
+.nytw-font-delete:hover {
+    background: rgba(200, 50, 50, 0.2);
+    opacity: 1;
+}
+
+.nytw-font-name {
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.nytw-font-sub {
+    font-size: 11px;
+    opacity: 0.5;
+    margin-top: 2px;
+}
+
+/* Scrollbar styling for content area */
+.nytw-content-area::-webkit-scrollbar {
+    width: 6px;
+}
+.nytw-content-area::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.1);
+}
+.nytw-content-area::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.1);
+    border-radius: 3px;
+}
+.nytw-content-area::-webkit-scrollbar-thumb:hover {
+    background: rgba(255,255,255,0.2);
+}
+
+/* --- Specific Overrides --- */
+
+/* Reduce whitespace for Import Tab items (Left shift) */
+#nytw_tab_import .nytw-row {
+    padding-left: 0px;
+}
+
+/* Exception: The main toggle in Import tab should have standard padding */
+#nytw_tab_import .nytw-row.nytw-main-toggle {
+    padding-left: 10px;
+}
+
+#nytw_tab_import .nytw-label {
+    width: 40px;
+}
+
+/* --- Import Button Animation --- */
+
+@keyframes nytw-import-glow {
+    0%, 100% {
+        box-shadow: 0 0 5px rgba(255, 255, 255, 0.2);
+        border-color: rgba(127, 127, 127, 0.5);
+    }
+    50% {
+        box-shadow: 0 0 15px rgba(255, 255, 255, 0.6);
+        border-color: rgba(255, 255, 255, 0.8);
+    }
+}
+
+.nytw-import-ready {
+    animation: nytw-import-glow 3s infinite ease-in-out !important;
+    transition: all 0.3s;
+    color: #fff !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+/* Specific centering alignment for "Imported Fonts" toggle */
+#nytw_imported_fonts_toggle.is-open .nytw-disclosure-label {
+    transform: translateX(calc(50% - 3.5em));
+}
+
+/* Override for imported fonts panel to allow internal scrolling if list is very long */
+#nytw_imported_fonts_panel {
+    /* Ensure it behaves like other collapsibles when closed (hidden) */
+    overflow: hidden !important;
+}
+
+/* Locale List Specific */
+.nytw-locale-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 8px;
+}
+
+.nytw-locale-row {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(255, 255, 255, 0.04);
+    padding: 3px 4px 3px 8px;
+    border-radius: 4px;
+    border: 1px solid rgba(127, 127, 127, 0.15);
+    transition: background 0.2s, z-index 0s;
+    z-index: 1;
+}
+
+.nytw-locale-row:focus-within {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(127, 127, 127, 0.3);
+    z-index: 10; /* Ensure popup floats above other rows */
+}
+
+/* 语言选择部分 */
+.nytw-locale-select-wrapper {
+    flex: 0 0 100px; /* 稍微宽一点，显示更多文字 */
+    width: 100px;
+    min-width: 0;
+}
+
+.nytw-locale-trigger {
+    cursor: pointer;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    padding-right: 15px; /* Leave space for imaginary arrow if needed, though clean looks better */
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.nytw-locale-trigger:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.nytw-locale-row .nytw-input-wrapper {
+    /* Right side (font input) expands */
+    flex: 1;
+    min-width: 0; 
+}
+
+/* Customized input for locale row to fit better */
+.nytw-locale-row .nytw-input {
+    width: 100%;
+    height: 26px;
+    font-size: 12px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-bottom: 1px solid rgba(127, 127, 127, 0.2);
+    border-radius: 0;
+    padding: 0 5px;
+    transition: all 0.2s;
+    box-sizing: border-box;
+}
+
+.nytw-locale-row .nytw-input:focus,
+.nytw-locale-row .nytw-input:hover {
+    background: rgba(0, 0, 0, 0.2);
+    border-bottom-color: rgba(255, 255, 255, 0.5);
+}
+
+.nytw-locale-delete {
+    width: 24px;
+    height: 26px;
+    opacity: 0.4;
+    background: transparent;
+    border: none;
+    color: #ff6b6b;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 3px;
+    transition: all 0.2s;
+}
+.nytw-locale-delete:hover {
+    opacity: 1;
+    background: rgba(200, 50, 50, 0.15);
+}
+
+/* Ensure popup within locale row behaves well */
+.nytw-locale-row .nytw-font-picker-popup {
+    top: 100%;
+    margin-top: 2px;
+}
+
+/* When open, allow scrolling (after animation delay inherited from class) */
+#nytw_imported_fonts_panel.is-open {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+}
+
+/* --- Add Locale Button (Dashed Design) --- */
+
+.nytw-add-locale-row {
+    justify-content: center; /* Center the button */
+    padding: 6px 0 !important; /* Reduced padding */
+    margin-top: 4px;
+    background: transparent !important;
+}
+
+.nytw-dashed-btn {
+    /* 方案 3：全宽超薄分割线型 */
+    width: 100%;            /* 全宽 */
+    height: 24px;           /* 极矮，像分割线 */
+    background: transparent;
+    border: 1px dashed rgba(255, 255, 255, 0.15); /* 极淡的边框 */
+    border-radius: 4px;     /* 小圆角 */
+    color: rgba(255, 255, 255, 0.35); /* 极淡的文字 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+    font-size: 11px;        /* 更小的字号 */
+    cursor: pointer;
+    padding: 0;
+}
+
+.nytw-dashed-btn:hover {
+    border-color: rgba(255, 255, 255, 0.35);
+    color: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.nytw-dashed-btn:active {
+    transform: translateY(0);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.nytw-dashed-btn i {
+    font-size: 12px;
+}
+
+/* --- Importer Toggle & Flowing Border Animation --- */
+
+.nytw-importer-toggle {
+    position: relative;
+    overflow: hidden;
+}
+
+/* Overwrite common open styles for this specific toggle */
+.nytw-importer-toggle.is-open {
+    background: rgba(255, 255, 255, 0.08); /* 恢复为原来的深色半透明背景 */
+    animation: none; /* 移除呼吸灯 */
+    border-radius: 6px; /* 保持较小的圆角，不要变成椭圆 */
+    border-color: transparent; /* 边框透明，让流光显示 */
+}
+
+.nytw-importer-toggle {
+    transition: background 0.4s ease, border-color 0.4s ease;
+}
+
+/* Cancel text transform centering */
+.nytw-importer-toggle.is-open .nytw-disclosure-label {
+    transform: none; /* 保持左对齐 */
+    color: rgba(255, 255, 255, 0.95); /* 亮白色文字 */
+    justify-content: center; /* 可以在这里让内容居中，如果需要 */
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.4); /* 柔和的白色光晕 */
+}
+
+.nytw-importer-toggle .nytw-disclosure-label {
+    transition: color 0.4s ease, text-shadow 0.4s ease, transform 0.4s ease;
+}
+
+/* Running Icon Styling */
+.nytw-icon-stack {
+    position: relative;
+    width: 14px;
+    height: 14px;
+    margin-right: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nytw-static-icon {
+    position: absolute;
+    transition: all 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
+    opacity: 0.7;
+    transform: scale(1) rotate(0deg);
+}
+
+.nytw-running-icon-wrapper {
+    position: absolute;
+    transition: all 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
+    opacity: 0;
+    transform: scale(0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nytw-running-icon {
+    font-size: 14px;
+    color: #ffffff; /* 纯白色 */
+    filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.6)); /* 白色发光 */
+    opacity: 0.95;
+    /* fa-spin is handled by fontawesome class */
+}
+
+/* Open state icon transitions */
+.nytw-importer-toggle.is-open .nytw-static-icon {
+    opacity: 0;
+    transform: scale(0.5) rotate(90deg);
+}
+
+.nytw-importer-toggle.is-open .nytw-running-icon-wrapper {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* Flowing Border Animations */
+.nytw-border-anim {
+    position: absolute;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    pointer-events: none;
+}
+
+.nytw-importer-toggle.is-open .nytw-border-anim {
+    opacity: 1;
+}
+
+.nytw-border-anim.top {
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0) 50%, #ffffff 100%);
+    animation: nytw-flow-top 4s linear infinite;
+    box-shadow: 0 0 3px rgba(255, 255, 255, 0.4);
+}
+
+.nytw-border-anim.right {
+    top: 0;
+    right: 0;
+    width: 1px;
+    height: 100%;
+    background: linear-gradient(180deg, transparent 0%, rgba(255, 255, 255, 0) 50%, #ffffff 100%);
+    animation: nytw-flow-right 4s linear infinite;
+    animation-delay: 1s;
+    box-shadow: 0 0 3px rgba(255, 255, 255, 0.4);
+}
+
+.nytw-border-anim.bottom {
+    bottom: 0;
+    right: 0;
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(270deg, transparent 0%, rgba(255, 255, 255, 0) 50%, #ffffff 100%);
+    animation: nytw-flow-bottom 4s linear infinite;
+    animation-delay: 2s;
+    box-shadow: 0 0 3px rgba(255, 255, 255, 0.4);
+}
+
+.nytw-border-anim.left {
+    bottom: 0;
+    left: 0;
+    width: 1px;
+    height: 100%;
+    background: linear-gradient(360deg, transparent 0%, rgba(255, 255, 255, 0) 50%, #ffffff 100%);
+    animation: nytw-flow-left 4s linear infinite;
+    animation-delay: 3s;
+    box-shadow: 0 0 3px rgba(255, 255, 255, 0.4);
+}
+
+/* Keyframes for sliding gradients */
+/* Note: Since we use gradients, we just need to move the element or the background.
+   Moving the element from -100% to 100% is the standard way.
+*/
+
+@keyframes nytw-flow-top {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+@keyframes nytw-flow-right {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(100%); }
+}
+@keyframes nytw-flow-bottom {
+    0% { transform: translateX(100%); }
+    100% { transform: translateX(-100%); }
+}
+@keyframes nytw-flow-left {
+    0% { transform: translateY(100%); }
+    100% { transform: translateY(-100%); }
+}
+
+/* --- Display Settings Redesign --- */
+
+.nytw-display-setting-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(127, 127, 127, 0.1);
+    border-radius: 8px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    position: relative;
+    overflow: hidden;
+    transition: background 0.3s;
+}
+
+.nytw-display-setting-card:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(127, 127, 127, 0.2);
+}
+
+.nytw-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 5px;
+}
+
+.nytw-card-icon {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.02));
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.nytw-card-info {
+    flex: 1;
+}
+
+.nytw-card-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.95);
+    margin-bottom: 2px;
+}
+
+.nytw-card-desc {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+/* Segmented Control */
+.nytw-segmented-control {
+    display: flex;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 4px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    position: relative;
+}
+
+.nytw-segment-option {
+    flex: 1;
+    text-align: center;
+    padding: 8px 0;
+    font-size: 12px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    border-radius: 4px;
+    position: relative;
+    z-index: 2;
+    transition: color 0.3s;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.nytw-segment-option:hover {
+    color: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.nytw-segment-option.active {
+    color: #fff;
+    background: linear-gradient(90deg, rgba(100, 149, 237, 0.2), rgba(100, 149, 237, 0.1)); /* 统一浅蓝色 */
+    border: 1px solid rgba(100, 149, 237, 0.3);
+    text-shadow: 0 0 5px rgba(100, 149, 237, 0.5);
+    font-weight: 600;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    animation: nytw-segment-breathe 3s infinite ease-in-out; /* 呼吸效果 */
+}
+
+.nytw-segment-option i {
+    font-size: 11px;
+    opacity: 0.8;
+}
+
+@keyframes nytw-segment-breathe {
+    0%, 100% {
+        box-shadow: 0 0 2px rgba(100, 149, 237, 0.2);
+        border-color: rgba(100, 149, 237, 0.3);
+    }
+    50% {
+        box-shadow: 0 0 10px rgba(100, 149, 237, 0.5);
+        border-color: rgba(100, 149, 237, 0.8);
+    }
+}
+
+/* --- Display Settings: Stream Animation Section --- */
+
+#nytw_stream_anim_section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px; /* Match inner section gap or parent gap */
+    
+    max-height: 500px;
+    opacity: 1;
+    overflow: hidden;
+    transform-origin: top;
+    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
+                opacity 0.3s ease 0.1s,
+                margin 0.3s ease,
+                gap 0.3s ease;
+}
+
+#nytw_stream_anim_section.is-disabled {
+    max-height: 0;
+    opacity: 0;
+    margin: 0;
+    gap: 0;
+    pointer-events: none;
+    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
+                opacity 0.2s ease,
+                margin 0.3s ease,
+                gap 0.3s ease;
+}
+
+.nytw-card-divider {
+    height: 1px;
+    width: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.10), transparent);
+    opacity: 0.8;
+}
+
+.nytw-card-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.nytw-card-section-header {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.nytw-card-section-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.92);
+}
+
+.nytw-card-section-title i {
+    font-size: 12px;
+    opacity: 0.85;
+}
+
+.nytw-card-section-desc {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.45);
+}
+
+.nytw-card-section-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.nytw-card-section-body.is-disabled {
+    opacity: 0.55;
+    filter: saturate(0.8);
+    pointer-events: none;
+}
+
+.nytw-mini-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border: 1px solid rgba(127, 127, 127, 0.10);
+    background: rgba(0, 0, 0, 0.25);
+    border-radius: 6px;
+}
+
+.nytw-mini-label {
+    width: 60px;
+    text-align: right;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.75);
+    flex-shrink: 0;
+}
+
+.nytw-mini-select {
+    flex: 1;
+    height: 28px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.92);
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    border-radius: 5px;
+    padding: 0 10px;
+    outline: none;
+}
+
+.nytw-mini-select:focus {
+    border-color: rgba(100, 149, 237, 0.45);
+    box-shadow: 0 0 0 2px rgba(100, 149, 237, 0.12);
+}
+
+.nytw-mini-inline {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 0;
+}
+
+.nytw-mini-inline input[type="range"] {
+    flex: 1;
+    accent-color: rgba(100, 149, 237, 0.9);
+}
+
+.nytw-mini-value {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.65);
+    min-width: 62px;
+    text-align: right;
+}
+
+.nytw-stream-anim-hint {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.45);
+    padding: 0 2px;
+}
+
+/* Toggle switch */
+.nytw-switch {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.nytw-switch input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.nytw-switch-slider {
+    width: 42px;
+    height: 22px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.10);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    position: relative;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.nytw-switch-slider::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 3px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.85);
+    transform: translateY(-50%);
+    transition: transform 0.2s ease, background 0.2s ease;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+.nytw-switch input:checked + .nytw-switch-slider {
+    background: rgba(100, 149, 237, 0.25);
+    border-color: rgba(100, 149, 237, 0.45);
+}
+
+/* --- Animation Stepper (Compact & Creative) --- */
+
+.nytw-anim-stepper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(127, 127, 127, 0.1);
+    border-radius: 8px;
+    padding: 6px;
+}
+
+.nytw-stepper-btn {
+    width: 28px;
+    height: 50px; /* Match content height */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+    color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.nytw-stepper-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.nytw-stepper-content {
+    flex: 1;
+    height: 50px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 4px;
+    overflow: hidden;
+}
+
+/* Reusing animation preview styles from previous attempt but adapting */
+.nytw-anim-preview {
+    font-size: 16px;
+    font-family: monospace;
+    color: #eee;
+    height: 24px;
+    display: flex;
+    align-items: center;
+}
+
+.nytw-anim-label {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+    font-weight: 500;
+}
+
+/* Specific Previews */
+.preview-none::after {
+    content: "OFF";
+    font-size: 14px;
+    opacity: 0.3;
+    font-weight: bold;
+}
+
+.preview-typewriter span {
+    border-right: 2px solid #fff;
+    animation: nytw-cursor-blink 1s infinite;
+}
+@keyframes nytw-cursor-blink { 
+    0%, 100% { border-color: transparent; }
+    50% { border-color: #fff; } 
+}
+
+.preview-blur span {
+    animation: nytw-blur-anim 2s infinite;
+}
+@keyframes nytw-blur-anim {
+    0%, 100% { filter: blur(0); opacity: 1; }
+    50% { filter: blur(3px); opacity: 0.5; }
+}
+
+.preview-glow span {
+    animation: nytw-glow-anim 2s infinite;
+}
+@keyframes nytw-glow-anim {
+    0%, 100% { text-shadow: none; color: #eee; }
+    50% { text-shadow: 0 0 5px #fff, 0 0 10px #4da6ff; color: #fff; }
+}
+
+/* --- Creative Rows (Speed & Cursor) --- */
+
+.nytw-creative-row {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(127, 127, 127, 0.1);
+    border-radius: 8px;
+    padding: 10px;
+    margin-top: 5px;
+}
+
+.nytw-creative-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.nytw-creative-label i {
+    opacity: 0.6;
+    font-size: 11px;
+}
+
+/* Speed Control */
+.nytw-range-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.nytw-range-wrapper i {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.nytw-creative-range {
+    flex: 1;
+    -webkit-appearance: none;
+    background: transparent;
+    height: 6px;
+    cursor: pointer;
+}
+
+/* Range Track */
+.nytw-creative-range::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    border: none;
+}
+
+/* Range Thumb */
+.nytw-creative-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 16px;
+    width: 16px;
+    border-radius: 50%;
+    background: #fff;
+    margin-top: -5px; /* Centers thumb */
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+    transition: transform 0.1s;
+}
+
+.nytw-creative-range:active::-webkit-slider-thumb {
+    transform: scale(1.2);
+    background: var(--smart-theme-color, #6495ed);
+    box-shadow: 0 0 15px var(--smart-theme-color, #6495ed);
+}
+
+.nytw-speed-display {
+    text-align: right;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.5);
+    font-family: monospace;
+    margin-top: -4px;
+}
+
+/* Cursor Toggle */
+.nytw-cursor-toggle-wrapper {
+    display: flex;
+}
+
+.nytw-cursor-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    user-select: none;
+}
+
+.nytw-cursor-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.cursor-icon {
+    font-family: monospace;
+    font-weight: bold;
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.3);
+    margin-right: 10px;
+    transition: color 0.3s, text-shadow 0.3s;
+}
+
+.cursor-text {
+    flex: 1;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.cursor-status {
+    font-size: 10px;
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.3);
+    color: rgba(255, 255, 255, 0.4);
+    transition: all 0.3s;
+}
+
+/* Checked State for Cursor */
+#nytw_stream_anim_cursor:checked + .nytw-cursor-btn {
+    background: rgba(100, 149, 237, 0.15);
+    border-color: rgba(100, 149, 237, 0.5);
+    box-shadow: 0 0 10px rgba(100, 149, 237, 0.1);
+}
+
+#nytw_stream_anim_cursor:checked + .nytw-cursor-btn .cursor-icon {
+    color: #fff;
+    text-shadow: 0 0 8px #fff;
+    animation: nytw-cursor-blink 1s infinite;
+}
+
+#nytw_stream_anim_cursor:checked + .nytw-cursor-btn .cursor-text {
+    color: #fff;
+}
+
+#nytw_stream_anim_cursor:checked + .nytw-cursor-btn .cursor-status {
+    background: rgba(100, 149, 237, 0.8);
+    color: #fff;
+    /* content: "ON"; - handled by JS to prevent pseudo conflict */
+}
+
+/* --- Animation Stepper Transition --- */
+
+.nytw-anim-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    width: 100%;
+    height: 100%;
+    /* Ensure it handles events */
+}
+
+.nytw-anim-enter {
+    animation: nytw-slide-in-up 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+.nytw-anim-exit {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    animation: nytw-slide-out-up 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+@keyframes nytw-slide-in-up {
+    0% { opacity: 0; transform: translateY(10px) scale(0.95); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes nytw-slide-out-up {
+    0% { opacity: 1; transform: translateY(0) scale(1); }
+    100% { opacity: 0; transform: translateY(-10px) scale(0.95); }
+}
+
