@@ -1,4 +1,4 @@
-﻿import { eventSource, event_types, streamingProcessor } from '../../../../script.js';
+﻿﻿import { eventSource, event_types, streamingProcessor } from '../../../../script.js';
 import { applyCustomIndependentFont, CUSTOM_INDEPENDENT_FONT_CLASS, CUSTOM_INDEPENDENT_FONT_MARK_ATTR } from './customIndependentFont.js';
 import { morphdom } from '../../../../lib.js';
 import { clampStreamAnimSpeed, getStreamRenderMode, normalizeStreamAnimEffect, settings } from './nytwState.js';
@@ -1195,11 +1195,50 @@ function syncTypewriterStreamCursor(bufferEl) {
 
 function ensureTypewriterStreamProgress(bufferEl, { stepMs = 20, effect = 'typewriter', granularity = 'grapheme' } = {}) {
     if (!bufferEl || !(bufferEl instanceof HTMLElement)) return;
-
     const resolvedEffect = normalizeStreamAnimEffect(effect);
     if (resolvedEffect === 'none') return;
 
     const resolvedStepMs = clampStreamAnimSpeed(stepMs);
+    const isSyncMode = stepMs <= 0;
+
+    // Optimized path for "Follow Actual Speed" (Sync Mode)
+    // Instantly reveal all pending segments without using timers.
+    if (isSyncMode) {
+        const pending = bufferEl.querySelectorAll(`.${STREAM_SEG_CLASS}[${STREAM_SEG_NEW_ATTR}]`);
+        if (pending.length > 0) {
+            pending.forEach((next) => {
+                if (!(next instanceof HTMLElement)) return;
+                
+                if (resolvedEffect === 'blur') {
+                    next.style.opacity = '0';
+                    next.style.filter = 'blur(10px)';
+                    next.style.animation = 'nytw-stream-blur-in 320ms cubic-bezier(.2,.8,.2,1) both';
+                } else if (resolvedEffect === 'glow') {
+                    next.style.opacity = '0';
+                    next.style.textShadow = '0 0 0 rgba(120,180,255,.0)';
+                    next.style.animation = 'nytw-stream-glow-in 420ms cubic-bezier(.18,.89,.32,1.05) both';
+                }
+
+                next.style.removeProperty('display');
+                next.removeAttribute(STREAM_SEG_NEW_ATTR);
+            });
+
+            // Update counts in batch
+            const shown = Number(bufferEl.dataset[STREAM_SHOWN_COUNT_DATA]) || 0;
+            // In sync mode, we assume all segments are shown
+            const total = Number(bufferEl.dataset[STREAM_SEG_COUNT_DATA]) || 0;
+            bufferEl.dataset[STREAM_SHOWN_COUNT_DATA] = String(Math.max(shown, total));
+
+            syncTypewriterStreamBlockVisibility(bufferEl);
+            syncTypewriterStreamCursor(bufferEl);
+        }
+        // Clear any existing timer if we switched from normal speed to sync
+        const existing = streamTypewriterTimers.get(bufferEl);
+        if (existing?.timerId) clearTimeout(existing.timerId);
+        streamTypewriterTimers.delete(bufferEl);
+        return;
+    }
+
     bufferEl.querySelectorAll(`.${STREAM_SEG_CLASS}[${STREAM_SEG_NEW_ATTR}]`).forEach((el) => {
         if (el instanceof HTMLElement) el.style.display = 'none';
     });

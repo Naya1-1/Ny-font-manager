@@ -35,6 +35,9 @@ export function initDisplaySettingsTab() {
     const streamAnimSpeedRowEl = document.getElementById('nytw_stream_anim_speed_row');
     const streamAnimSpeedEl = document.getElementById('nytw_stream_anim_speed');
     const streamAnimSpeedValueEl = document.getElementById('nytw_stream_anim_speed_value');
+    const streamAnimSpeedModeControl = document.getElementById('nytw_speed_mode_control');
+    const streamAnimSpeedFixedPanel = document.getElementById('nytw_speed_fixed_panel');
+    const streamAnimSpeedSyncPanel = document.getElementById('nytw_speed_sync_panel');
     const streamAnimCursorRowEl = document.getElementById('nytw_stream_anim_cursor_row');
     const streamAnimCursorEl = document.getElementById('nytw_stream_anim_cursor');
 
@@ -114,12 +117,35 @@ export function initDisplaySettingsTab() {
         if (streamAnimSpeedRowEl) streamAnimSpeedRowEl.style.display = showTypewriter ? '' : 'none';
         if (streamAnimCursorRowEl) streamAnimCursorRowEl.style.display = showTypewriter ? '' : 'none';
 
-        const speed = clampStreamAnimSpeed(settings.streamAnimSpeed);
-        if (streamAnimSpeedEl instanceof HTMLInputElement) {
-            streamAnimSpeedEl.value = String(speed);
+        // Speed UI Sync
+        const currentSpeed = settings.streamAnimSpeed;
+        const isSyncMode = currentSpeed <= 0;
+        const displaySpeed = isSyncMode ? (streamAnimSpeedEl ? clampStreamAnimSpeed(streamAnimSpeedEl.value) : 20) : clampStreamAnimSpeed(currentSpeed);
+
+        // 1. Segmented Control Active State
+        if (streamAnimSpeedModeControl) {
+            const options = streamAnimSpeedModeControl.querySelectorAll('.nytw-segment-option');
+            options.forEach(opt => {
+                if (opt.dataset.value === (isSyncMode ? 'sync' : 'fixed')) {
+                    opt.classList.add('active');
+                } else {
+                    opt.classList.remove('active');
+                }
+            });
         }
-        if (streamAnimSpeedValueEl) {
-            streamAnimSpeedValueEl.textContent = `${speed}ms/字`;
+
+        // 2. Panel Visibility
+        if (streamAnimSpeedFixedPanel) streamAnimSpeedFixedPanel.style.display = isSyncMode ? 'none' : '';
+        if (streamAnimSpeedSyncPanel) streamAnimSpeedSyncPanel.style.display = isSyncMode ? '' : 'none';
+
+        // 3. Update Range Input & Label if in Fixed Mode
+        if (!isSyncMode) {
+            if (streamAnimSpeedEl instanceof HTMLInputElement) {
+                streamAnimSpeedEl.value = String(displaySpeed);
+            }
+            if (streamAnimSpeedValueEl) {
+                streamAnimSpeedValueEl.textContent = `${displaySpeed}ms/字`;
+            }
         }
 
         if (streamAnimCursorEl instanceof HTMLInputElement) {
@@ -205,11 +231,33 @@ export function initDisplaySettingsTab() {
         });
     }
 
+    if (streamAnimSpeedModeControl) {
+        const options = streamAnimSpeedModeControl.querySelectorAll('.nytw-segment-option');
+        options.forEach(opt => {
+            opt.addEventListener('click', () => {
+                const mode = opt.dataset.value;
+                if (mode === 'sync') {
+                    settings.streamAnimSpeed = 0;
+                } else {
+                    // Switch to fixed: recover value from slider or default
+                    if (streamAnimSpeedEl instanceof HTMLInputElement) {
+                        settings.streamAnimSpeed = clampStreamAnimSpeed(streamAnimSpeedEl.value);
+                    } else {
+                        settings.streamAnimSpeed = 20;
+                    }
+                }
+                syncStreamAnimUi();
+                saveSettingsDebounced();
+                scheduleScan({ full: false });
+            });
+        });
+    }
+
     if (streamAnimSpeedEl instanceof HTMLInputElement) {
         const updateSpeed = () => {
             const speed = clampStreamAnimSpeed(streamAnimSpeedEl.value);
             settings.streamAnimSpeed = speed;
-            if (streamAnimSpeedValueEl) streamAnimSpeedValueEl.textContent = `${speed}ms/字`;
+            syncStreamAnimUi();
             saveSettingsDebounced();
             scheduleScan({ full: false });
         };

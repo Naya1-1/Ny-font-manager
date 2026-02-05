@@ -234,13 +234,34 @@
                                 <input type="hidden" id="nytw_stream_anim_effect" />
 
                                 <div class="nytw-creative-row" id="nytw_stream_anim_speed_row">
-                                    <div class="nytw-creative-label"><i class="fa-solid fa-gauge-high"></i> 打印速度</div>
-                                    <div class="nytw-range-wrapper">
-                                        <i class="fa-solid fa-tortoise slow-icon"></i>
-                                        <input id="nytw_stream_anim_speed" type="range" min="10" max="80" step="2" class="nytw-creative-range" />
-                                        <i class="fa-solid fa-person-running fast-icon"></i>
+                                    <div class="nytw-creative-label" style="margin-bottom: 6px;"><i class="fa-solid fa-gauge-high"></i> 打印速度</div>
+                                    
+                                    <!-- 速度模式选择器 -->
+                                    <div class="nytw-segmented-control nytw-segmented-control--small" id="nytw_speed_mode_control">
+                                        <div class="nytw-segment-option" data-value="fixed">
+                                            <span class="name">固定速度</span>
+                                        </div>
+                                        <div class="nytw-segment-option" data-value="sync">
+                                            <span class="name">跟随实际</span>
+                                        </div>
                                     </div>
-                                    <div class="nytw-speed-display" id="nytw_stream_anim_speed_value"></div>
+
+                                    <!-- 模式 A：固定速度 -->
+                                    <div id="nytw_speed_fixed_panel" style="margin-top: 8px;">
+                                        <div class="nytw-range-wrapper">
+                                            <i class="fa-solid fa-tortoise slow-icon"></i>
+                                            <input id="nytw_stream_anim_speed" type="range" min="3" max="80" step="2" class="nytw-creative-range" />
+                                            <i class="fa-solid fa-person-running fast-icon"></i>
+                                        </div>
+                                        <div class="nytw-speed-display" id="nytw_stream_anim_speed_value" style="margin-top: 4px;"></div>
+                                    </div>
+
+                                    <!-- 模式 B：跟随实际 -->
+                                    <div id="nytw_speed_sync_panel" style="margin-top: 8px; display: none;">
+                                        <div class="nytw-stream-anim-hint" style="text-align: center; padding: 4px; color: rgba(255,255,255,0.6);">
+                                            <i class="fa-solid fa-link"></i> 动画将完全同步文本生成速度
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div class="nytw-creative-row" id="nytw_stream_anim_cursor_row">

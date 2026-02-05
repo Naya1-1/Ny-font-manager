@@ -58,7 +58,8 @@ export function normalizeStreamAnimEffect(value) {
 export function clampStreamAnimSpeed(value) {
     const num = Number(value);
     if (!Number.isFinite(num)) return 20;
-    return Math.min(80, Math.max(10, Math.round(num)));
+    if (num <= 0) return 0;
+    return Math.min(80, Math.max(3, Math.round(num)));
 }
 
 export function getStreamRenderMode() {

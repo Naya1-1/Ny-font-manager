@@ -1128,6 +1128,18 @@
     }
 }
 
+/* Small variant for internal controls */
+.nytw-segmented-control--small {
+    padding: 2px;
+    background: rgba(0, 0, 0, 0.2);
+    border: none;
+}
+
+.nytw-segmented-control--small .nytw-segment-option {
+    padding: 3px 0;
+    font-size: 11px;
+}
+
 /* --- Display Settings: Stream Animation Section --- */
 
 #nytw_stream_anim_section {
@@ -1486,6 +1498,35 @@
     color: rgba(255, 255, 255, 0.5);
     font-family: monospace;
     margin-top: -4px;
+}
+
+/* Speed Sync Header */
+.nytw-speed-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.nytw-speed-sync-label {
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    color: rgba(255, 255, 255, 0.6);
+    user-select: none;
+    transition: color 0.2s;
+}
+
+.nytw-speed-sync-label:hover {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.nytw-speed-sync-label input {
+    margin: 0;
+    cursor: pointer;
+    accent-color: var(--smart-theme-color, #6495ed);
 }
 
 /* Cursor Toggle */
