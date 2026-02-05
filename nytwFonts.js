@@ -1,4 +1,4 @@
-﻿import { settings } from './nytwState.js';
+﻿﻿﻿import { settings } from './nytwState.js';
 import { LOCALE_UI_ORDER, UNICODE_RANGES } from './nytwLocaleData.js';
 
 const FONT_STYLE_ID = 'nytw-font-style';
@@ -179,6 +179,8 @@ const FONT_FAMILY_DISPLAY_NAME_MAP = new Map([
     ['Gaegu', '可爱手写 (Gaegu)'],
     ['Gamja Flower', '可爱花朵 (Gamja Flower)'],
     ['Single Day', '可爱单日 (Single Day)'],
+    ['Tiejili SC', '铁蒺藜体'],
+    ['BoutiqueBitmap9x9', '精品点阵体9x9'],
 ]);
 
 const FONT_GROUP_MAP = {
@@ -211,6 +213,8 @@ const FONT_GROUP_MAP = {
     'Ma Shan Zheng': 'chinese',
     'Long Cang': 'chinese',
     'Liu Jian Mao Cao': 'chinese',
+    'Tiejili SC': 'chinese',
+    'BoutiqueBitmap9x9': 'chinese',
 
     'Silkscreen': 'english',
     'Press Start 2P': 'english',
