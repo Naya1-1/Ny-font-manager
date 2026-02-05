@@ -20,6 +20,7 @@ const PRESET_FONTS = [
     { id: 'preset_gaegu', family: 'Gaegu', cssUrl: 'https://fonts.googleapis.com/css2?family=Gaegu&display=swap' },
     { id: 'preset_gamja_flower', family: 'Gamja Flower', cssUrl: 'https://fonts.googleapis.com/css2?family=Gamja+Flower&display=swap' },
     { id: 'preset_single_day', family: 'Single Day', cssUrl: 'https://fonts.googleapis.com/css2?family=Single+Day&display=swap' },
+    { id: 'preset_mea_culpa', family: 'Mea Culpa', cssUrl: 'https://fonts.googleapis.com/css2?family=Mea+Culpa&display=swap' },
     { id: 'preset_Tiejili SC', family: 'Tiejili SC', cssUrl: 'https://fontsapi.zeoseven.com/100/main/result.css' },
     { id: 'preset_boutique_bitmap_9x9', family: 'BoutiqueBitmap9x9', cssUrl: 'https://fontsapi.zeoseven.com/65/main/result.css' },
 ];
@@ -92,7 +93,7 @@ function applyDefaultSettings() {
     if (!Array.isArray(settings.importedFonts)) settings.importedFonts = [];
     if (!Array.isArray(settings.localeFonts)) settings.localeFonts = [];
 
-    if (settings.presetsVersion < 2) {
+    if (settings.presetsVersion < 3) {
         for (const preset of PRESET_FONTS) {
             const exists = settings.importedFonts.some(f => f.family === preset.family || f.id === preset.id);
             if (!exists) {
@@ -102,7 +103,7 @@ function applyDefaultSettings() {
                 });
             }
         }
-        settings.presetsVersion = 2;
+        settings.presetsVersion = 3;
     }
 }
 

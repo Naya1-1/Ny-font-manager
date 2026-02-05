@@ -1,4 +1,4 @@
-﻿﻿﻿import { settings } from './nytwState.js';
+﻿﻿﻿﻿﻿import { settings } from './nytwState.js';
 import { LOCALE_UI_ORDER, UNICODE_RANGES } from './nytwLocaleData.js';
 
 const FONT_STYLE_ID = 'nytw-font-style';
@@ -181,6 +181,7 @@ const FONT_FAMILY_DISPLAY_NAME_MAP = new Map([
     ['Single Day', '可爱单日 (Single Day)'],
     ['Tiejili SC', '铁蒺藜体'],
     ['BoutiqueBitmap9x9', '精品点阵体9x9'],
+    ['Mea Culpa', 'Mea Culpa'],
 ]);
 
 const FONT_GROUP_MAP = {
@@ -222,6 +223,7 @@ const FONT_GROUP_MAP = {
     'Gaegu': 'english',
     'Gamja Flower': 'english',
     'Single Day': 'english',
+    'Mea Culpa': 'english',
 };
 
 const FONT_GROUP_LABELS = {
