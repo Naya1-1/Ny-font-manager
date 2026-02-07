@@ -1023,7 +1023,7 @@
     gap: 12px;
     position: relative;
     overflow: hidden;
-    transition: background 0.3s;
+    transition: background 0.3s, border-color 0.3s, padding 0.3s, gap 0.3s;
 }
 
 .nytw-display-setting-card:hover {
@@ -1031,11 +1031,66 @@
     border-color: rgba(127, 127, 127, 0.2);
 }
 
+.nytw-display-setting-card.is-collapsed,
+.nytw-display-setting-card.is-collapsed:hover {
+    background: transparent;
+    border-color: transparent;
+    padding-bottom: 0;
+    gap: 0;
+    overflow: visible;
+}
+
+/* 折叠时移除 Header 的底部边距，使高度更紧凑 */
+.nytw-display-setting-card.is-collapsed .nytw-card-header {
+    margin-bottom: 0;
+}
+
 .nytw-card-header {
     display: flex;
     align-items: center;
     gap: 12px;
     margin-bottom: 5px;
+}
+
+.nytw-card-header.nytw-card-toggle {
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.2s;
+    padding: 6px 8px; /* Slightly larger clickable area */
+    margin: -6px -8px 5px; /* Negative margin to offset padding */
+    border-radius: 6px;
+}
+
+.nytw-card-header.nytw-card-toggle:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.nytw-card-chevron {
+    margin-left: auto;
+    font-size: 12px;
+    opacity: 0.5;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nytw-display-setting-card.is-collapsed .nytw-card-chevron {
+    transform: rotate(-90deg);
+}
+
+.nytw-card-content {
+    overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+    max-height: 1000px; /* Arbitrary large value */
+    opacity: 1;
+}
+
+.nytw-display-setting-card.is-collapsed .nytw-card-content {
+    max-height: 0;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.nytw-display-setting-card.is-collapsed .nytw-card-desc {
+    opacity: 0.3;
 }
 
 .nytw-card-icon {
@@ -1066,6 +1121,24 @@
 .nytw-card-desc {
     font-size: 11px;
     color: rgba(255, 255, 255, 0.5);
+}
+
+/* 两个折叠卡片之间的分割线 */
+.nytw-display-setting-card + .nytw-display-setting-card::before {
+    content: "";
+    position: absolute;
+    top: -5px; /* 位于 8px 间隙的中间 */
+    left: 10px;
+    right: 10px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+}
+
+.nytw-display-setting-card.is-collapsed + .nytw-display-setting-card.is-collapsed::before {
+    opacity: 1;
 }
 
 /* Segmented Control */
@@ -1278,6 +1351,136 @@
     font-size: 11px;
     color: rgba(255, 255, 255, 0.45);
     padding: 0 2px;
+}
+
+/* --- Display Settings: Typography Section --- */
+
+.nytw-typo-row {
+    display: grid;
+    grid-template-columns: 65px 1fr 1fr;
+    gap: 10px;
+    align-items: center;
+
+    padding: 8px 10px;
+    border: 1px solid rgba(127, 127, 127, 0.10);
+    background: rgba(0, 0, 0, 0.25);
+    border-radius: 6px;
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.nytw-typo-row:not(.nytw-typo-head):hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.nytw-typo-row.nytw-typo-head {
+    padding: 0 10px;
+    border: none;
+    background: transparent;
+    opacity: 0.9;
+    margin-bottom: 2px;
+}
+
+.nytw-typo-row.nytw-typo-head > div {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+.nytw-typo-type {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.9);
+    white-space: nowrap;
+}
+
+.nytw-typo-type i {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.5);
+    width: 14px;
+    text-align: center;
+}
+
+.nytw-typo-input {
+    width: 100%;
+    height: 100%;
+    font-size: 13px;
+    font-family: monospace;
+    color: rgba(255, 255, 255, 0.92);
+    background: transparent !important;
+    border: none !important;
+    padding: 0;
+    text-align: center;
+    outline: none;
+    -moz-appearance: textfield;
+}
+
+.nytw-typo-input::-webkit-inner-spin-button, 
+.nytw-typo-input::-webkit-outer-spin-button { 
+    -webkit-appearance: none; 
+    margin: 0; 
+}
+
+/* Stepper Styles */
+.nytw-stepper {
+    display: flex;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    height: 30px;
+    overflow: hidden;
+    transition: all 0.2s ease;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.nytw-stepper:hover, .nytw-stepper:focus-within {
+    border-color: rgba(255, 255, 255, 0.3);
+    background: rgba(0, 0, 0, 0.4);
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.nytw-stepper:focus-within {
+    border-color: var(--smart-theme-color, #6495ed);
+    box-shadow: 0 0 0 1px var(--smart-theme-color, #6495ed);
+}
+
+.nytw-stepper-btn {
+    width: 28px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.4);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 10px;
+}
+
+.nytw-stepper-btn:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.nytw-stepper-btn:active {
+    background: rgba(255, 255, 255, 0.15);
+    transform: scale(0.95);
+}
+
+.nytw-stepper-btn.minus {
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.nytw-stepper-btn.plus {
+    border-left: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 /* Toggle switch */
@@ -1637,4 +1840,3 @@
     0% { opacity: 1; transform: translateY(0) scale(1); }
     100% { opacity: 0; transform: translateY(-10px) scale(0.95); }
 }
-

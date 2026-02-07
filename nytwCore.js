@@ -1,7 +1,7 @@
 ﻿﻿import { eventSource, event_types, streamingProcessor } from '../../../../script.js';
 import { applyCustomIndependentFont, CUSTOM_INDEPENDENT_FONT_CLASS, CUSTOM_INDEPENDENT_FONT_MARK_ATTR } from './customIndependentFont.js';
 import { morphdom } from '../../../../lib.js';
-import { clampStreamAnimSpeed, getStreamRenderMode, normalizeStreamAnimEffect, settings } from './nytwState.js';
+import { clampOptionalFontSize, clampOptionalLetterSpacing, clampStreamAnimSpeed, getStreamRenderMode, normalizeStreamAnimEffect, settings } from './nytwState.js';
 import { LOCALE_KEY_PRIORITY, UNICODE_RANGES } from './nytwLocaleData.js';
 import {
     buildFontFaceCssForFamilies,
@@ -28,6 +28,7 @@ const STREAM_CURSOR_ATTR = 'data-nytw-stream-cursor';
 const STREAM_SEG_CLASS = 'nytw-stream-seg';
 const STREAM_SEG_NEW_ATTR = 'data-nytw-stream-new';
 const STREAM_SEG_BR_ATTR = 'data-nytw-stream-br';
+const STREAM_SEG_WS_ATTR = 'data-nytw-stream-ws';
 const STREAM_CURSOR_CLASS = 'nytw-stream-cursor';
 const STREAM_BLOCK_HIDDEN_ATTR = 'data-nytw-stream-block-hidden';
 const STREAM_SEG_COUNT_DATA = 'nytwStreamSegCount';
@@ -78,12 +79,64 @@ function queueApplyFonts() {
         .catch((error) => console.error('[NyTW] Failed to apply fonts', error));
 }
 
+function setOrRemoveCssVar(el, name, value) {
+    if (!el || !(el instanceof HTMLElement)) return;
+    const raw = String(value ?? '').trim();
+    if (!raw) {
+        el.style.removeProperty(name);
+        return;
+    }
+    el.style.setProperty(name, raw);
+}
+
+function clearTypographyVariables(chatEl) {
+    if (!chatEl || !(chatEl instanceof HTMLElement)) return;
+
+    chatEl.style.removeProperty('--nytw-body-font-size');
+    chatEl.style.removeProperty('--nytw-body-letter-spacing');
+    chatEl.style.removeProperty('--nytw-dialogue-font-size');
+    chatEl.style.removeProperty('--nytw-dialogue-letter-spacing');
+    chatEl.style.removeProperty('--nytw-custom-font-size');
+    chatEl.style.removeProperty('--nytw-custom-letter-spacing');
+    chatEl.style.removeProperty('--nytw-locale-font-size');
+    chatEl.style.removeProperty('--nytw-locale-letter-spacing');
+}
+
+function applyTypographyVariables() {
+    const chatEl = document.getElementById('chat');
+    if (!chatEl) return;
+
+    if (!settings.fontsEnabled) {
+        clearTypographyVariables(chatEl);
+        return;
+    }
+
+    const bodyFontSize = clampOptionalFontSize(settings.bodyFontSize);
+    const bodyLetterSpacing = clampOptionalLetterSpacing(settings.bodyLetterSpacing);
+    const dialogueFontSize = clampOptionalFontSize(settings.dialogueFontSize);
+    const dialogueLetterSpacing = clampOptionalLetterSpacing(settings.dialogueLetterSpacing);
+    const customFontSize = clampOptionalFontSize(settings.customFontSize);
+    const customLetterSpacing = clampOptionalLetterSpacing(settings.customLetterSpacing);
+    const localeFontSize = clampOptionalFontSize(settings.localeFontSize);
+    const localeLetterSpacing = clampOptionalLetterSpacing(settings.localeLetterSpacing);
+
+    setOrRemoveCssVar(chatEl, '--nytw-body-font-size', bodyFontSize === null ? '' : `${bodyFontSize}px`);
+    setOrRemoveCssVar(chatEl, '--nytw-body-letter-spacing', bodyLetterSpacing === null ? '' : `${bodyLetterSpacing}em`);
+    setOrRemoveCssVar(chatEl, '--nytw-dialogue-font-size', dialogueFontSize === null ? '' : `${dialogueFontSize}px`);
+    setOrRemoveCssVar(chatEl, '--nytw-dialogue-letter-spacing', dialogueLetterSpacing === null ? '' : `${dialogueLetterSpacing}em`);
+    setOrRemoveCssVar(chatEl, '--nytw-custom-font-size', customFontSize === null ? '' : `${customFontSize}px`);
+    setOrRemoveCssVar(chatEl, '--nytw-custom-letter-spacing', customLetterSpacing === null ? '' : `${customLetterSpacing}em`);
+    setOrRemoveCssVar(chatEl, '--nytw-locale-font-size', localeFontSize === null ? '' : `${localeFontSize}px`);
+    setOrRemoveCssVar(chatEl, '--nytw-locale-letter-spacing', localeLetterSpacing === null ? '' : `${localeLetterSpacing}em`);
+}
+
 async function applyFontSettings() {
     const styleEl = ensureFontStyleElement();
     if (!settings.fontsEnabled) {
         styleEl.textContent = '';
         revokeAllFontObjectUrls();
         syncExternalFontStylesheets([]);
+        applyTypographyVariables();
         return;
     }
 
@@ -145,6 +198,18 @@ async function applyFontSettings() {
         ].join('');
     }
 
+    css += '\n/* Typography overrides (font-size / letter-spacing) */\n';
+    css += '\n#chat .mes_text{font-size:var(--nytw-body-font-size) !important;letter-spacing:var(--nytw-body-letter-spacing) !important;}';
+    css += `\n#chat .mes_text [${LOCALE_FONT_ATTR}]{font-size:var(--nytw-locale-font-size) !important;letter-spacing:var(--nytw-locale-letter-spacing) !important;}`;
+    css += [
+        '\n#chat .mes_text .Ny-font-manager,',
+        '#chat .mes_text .custom-Ny-font-manager,',
+        '#chat .mes_text .ny-dialogue,',
+        '#chat .mes_text .custom-ny-dialogue',
+        '{font-size:var(--nytw-dialogue-font-size) !important;letter-spacing:var(--nytw-dialogue-letter-spacing) !important;}',
+    ].join('');
+    css += `\n#chat .mes_text .${CUSTOM_INDEPENDENT_FONT_CLASS},#chat .mes_text .custom-${CUSTOM_INDEPENDENT_FONT_CLASS}{font-size:var(--nytw-custom-font-size) !important;letter-spacing:var(--nytw-custom-letter-spacing) !important;}`;
+
     css += [
         '\n/* Streaming: disable NyTW animations to avoid flicker while SillyTavern re-renders .mes_text */',
         `\n#chat .mes.${STREAMING_MESSAGE_CLASS} .mes_text{white-space:normal !important;}`,
@@ -166,6 +231,7 @@ async function applyFontSettings() {
         '\n/* Streaming animations (NyTW) */',
         `\n#chat .mes.${STREAMING_MESSAGE_CLASS}[${STREAM_RENDER_ATTR}="buffer"][${STREAM_ANIM_ATTR}] .mes_text.${STREAM_BUFFER_CLASS} .${STREAM_SEG_CLASS}{display:inline-block;vertical-align:baseline;}`,
         `\n#chat .mes.${STREAMING_MESSAGE_CLASS}[${STREAM_RENDER_ATTR}="buffer"][${STREAM_ANIM_ATTR}] .mes_text.${STREAM_BUFFER_CLASS} .${STREAM_SEG_CLASS}[${STREAM_SEG_BR_ATTR}="1"]{display:inline !important;}`,
+        `\n#chat .mes.${STREAMING_MESSAGE_CLASS}[${STREAM_RENDER_ATTR}="buffer"][${STREAM_ANIM_ATTR}] .mes_text.${STREAM_BUFFER_CLASS} .${STREAM_SEG_CLASS}[${STREAM_SEG_WS_ATTR}="1"]{display:inline !important;}`,
         `\n#chat .mes.${STREAMING_MESSAGE_CLASS}[${STREAM_RENDER_ATTR}="buffer"][${STREAM_ANIM_ATTR}="typewriter"] .mes_text.${STREAM_BUFFER_CLASS} .${STREAM_SEG_CLASS}[${STREAM_SEG_NEW_ATTR}]{opacity:0;animation:nytw-stream-tw-in 160ms cubic-bezier(.18,.89,.32,1.05) both;animation-delay:calc(var(--nytw-stream-i, 0) * var(${STREAM_STEP_VAR}, 20ms));}`,
         `\n#chat .mes.${STREAMING_MESSAGE_CLASS}[${STREAM_RENDER_ATTR}="buffer"][${STREAM_ANIM_ATTR}="blur"] .mes_text.${STREAM_BUFFER_CLASS} .${STREAM_SEG_CLASS}[${STREAM_SEG_NEW_ATTR}]{opacity:0;filter:blur(10px);animation:nytw-stream-blur-in 320ms cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--nytw-stream-i, 0) * 12ms);}`,
         `\n#chat .mes.${STREAMING_MESSAGE_CLASS}[${STREAM_RENDER_ATTR}="buffer"][${STREAM_ANIM_ATTR}="glow"] .mes_text.${STREAM_BUFFER_CLASS} .${STREAM_SEG_CLASS}[${STREAM_SEG_NEW_ATTR}]{opacity:0;text-shadow:0 0 0 rgba(120,180,255,.0);animation:nytw-stream-glow-in 420ms cubic-bezier(.18,.89,.32,1.05) both;animation-delay:calc(var(--nytw-stream-i, 0) * 10ms);}`,
@@ -183,6 +249,7 @@ async function applyFontSettings() {
     ].join('');
 
     styleEl.textContent = css;
+    applyTypographyVariables();
 }
 
 function stripStreamingBufferWhitespace(rootEl) {
@@ -227,7 +294,6 @@ function applyQuoteWrapping(rootEl) {
         ['\u2018', '\u2019'], // ‘ ’
         ['\u00AB', '\u00BB'], // « »
         ['\u300C', '\u300D'], // 「 」
-        ['\u300E', '\u300F'], // 『 』
         ['\uFF02', '\uFF02'], // ＂ ＂
         ['\uFF07', '\uFF07'], // ＇ ＇
         ['\'', '\''],
@@ -718,6 +784,13 @@ function segmentTextForStreamingAnimation(rootEl, { granularity = 'word', baseIn
     let globalIndex = 0;
     const resolvedGranularity = String(granularity || 'word');
     const segmentLineBreaks = resolvedGranularity === 'grapheme';
+    const splitSegmentParts = (segment) => {
+        const raw = String(segment ?? '');
+        if (!raw) return [];
+        // Keep whitespace as its own segment so it can render as normal inline whitespace
+        // (inline-block whitespace segments can collapse to zero width in some browsers).
+        return raw.match(/[\s\u200B\u200C\u200D\uFEFF]+|[^\s\u200B\u200C\u200D\uFEFF]+/g) || [raw];
+    };
     const shouldCountSegment = (segment) => {
         if (segment === '\r') return false;
         if (segmentLineBreaks) return true;
@@ -778,16 +851,26 @@ function segmentTextForStreamingAnimation(rootEl, { granularity = 'word', baseIn
             if (segment === '\r') continue;
             if (segment === '\n') continue;
 
-            const span = document.createElement('span');
-            span.className = STREAM_SEG_CLASS;
+            const parts = splitSegmentParts(segment);
+            for (const part of parts) {
+                if (!part) continue;
+                if (part === '\r') continue;
+                if (part === '\n') continue;
 
-            const isNew = globalIndex >= baseIndex;
-            if (isNew) span.setAttribute(STREAM_SEG_NEW_ATTR, '1');
-            span.style.setProperty('--nytw-stream-i', String(Math.max(0, globalIndex - baseIndex)));
-            span.textContent = segment;
-            fragment.appendChild(span);
+                const span = document.createElement('span');
+                span.className = STREAM_SEG_CLASS;
+                if (/^[\s\u200B\u200C\u200D\uFEFF]+$/.test(part)) {
+                    span.setAttribute(STREAM_SEG_WS_ATTR, '1');
+                }
 
-            if (shouldCountSegment(segment)) globalIndex += 1;
+                const isNew = globalIndex >= baseIndex;
+                if (isNew) span.setAttribute(STREAM_SEG_NEW_ATTR, '1');
+                span.style.setProperty('--nytw-stream-i', String(Math.max(0, globalIndex - baseIndex)));
+                span.textContent = part;
+                fragment.appendChild(span);
+
+                if (shouldCountSegment(part)) globalIndex += 1;
+            }
         }
         textNode.replaceWith(fragment);
     }
@@ -1633,4 +1716,4 @@ try {
 
 queueApplyFonts();
 
-export { queueApplyFonts, scheduleScan };
+export { applyTypographyVariables, queueApplyFonts, scheduleScan };

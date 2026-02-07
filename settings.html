@@ -17,7 +17,7 @@
             <div class="nytw-content-area">
                 
                 <!-- Tab 1: 字体设置 -->
-                <div id="nytw_tab_settings" class="nytw-tab-pane active">
+     <div id="nytw_tab_settings" class="nytw-tab-pane active">
                     <!-- 总开关 (带折叠效果) -->
                     <div class="flex-container alignItemsCenter nytw-row nytw-row--disclosure nytw-main-toggle nytw-importer-toggle" id="nytw_fonts_enabled_row">
                         <!-- 流光动画边框元素 -->
@@ -32,7 +32,7 @@
                             <div class="nytw-icon-stack">
                                 <i class="fa-solid fa-chevron-right nytw-disclosure-icon nytw-static-icon" aria-hidden="true"></i>
                                 <div class="nytw-running-icon-wrapper">
-                                    <i class="fa-solid fa-check nytw-running-icon" aria-hidden="true"></i>
+                      <i class="fa-solid fa-check nytw-running-icon" aria-hidden="true"></i>
                                 </div>
                             </div>
                             
@@ -53,7 +53,7 @@
                                     type="text"
                                     class="text_pole nytw-input nytw-font-input"
                                     placeholder="（留空表示默认）"
-                                    autocomplete="off" />
+                       autocomplete="off" />
                                 <div class="nytw-font-picker-popup" id="nytw_body_font_popup"></div>
                             </div>
                             <button id="nytw_body_font_clear"
@@ -72,7 +72,7 @@
                                 <input id="nytw_dialogue_font"
                                     type="text"
                                     class="text_pole nytw-input nytw-font-input"
-                                    placeholder="（留空表示默认）"
+                                    placeholder="（留空表示默认���"
                                     autocomplete="off" />
                                 <div class="nytw-font-picker-popup" id="nytw_dialogue_font_popup"></div>
                             </div>
@@ -126,7 +126,7 @@
                                         autocomplete="off" />
                                     <div class="nytw-font-picker-popup" id="nytw_custom_font_popup"></div>
                                 </div>
-                                <button id="nytw_custom_font_clear"
+                     <button id="nytw_custom_font_clear"
                                         class="menu_button nytw-icon-button"
                                         type="button"
                                         title="清除"
@@ -191,8 +191,8 @@
                 <!-- Tab 2: 显示设置 -->
                 <div id="nytw_tab_display" class="nytw-tab-pane">
 
-                    <div class="nytw-display-setting-card">
-                        <div class="nytw-card-header">
+                    <div class="nytw-display-setting-card" id="nytw_card_stream">
+                        <div class="nytw-card-header nytw-card-toggle">
                             <div class="nytw-card-icon">
                                 <i class="fa-solid fa-wand-magic-sparkles"></i>
                             </div>
@@ -200,85 +200,183 @@
                                 <div class="nytw-card-title">流式输出渲染模式</div>
                                 <div class="nytw-card-desc">决定所设置的文字字体显示时间</div>
                             </div>
+                            <div class="nytw-card-chevron">
+                                <i class="fa-solid fa-chevron-down"></i>
+                            </div>
                         </div>
                         
-                        <div class="nytw-segmented-control" id="nytw_render_mode_control">
-                            <div class="nytw-segment-option" data-value="buffer">
-                                <i class="fa-solid fa-bolt"></i> <span class="name">实时显示</span>
+                        <div class="nytw-card-content">
+                            <div class="nytw-card-body-padding">
+                                <div class="nytw-segmented-control" id="nytw_render_mode_control">
+                                    <div class="nytw-segment-option" data-value="buffer">
+                                        <i class="fa-solid fa-bolt"></i> <span class="name">实时显示</span>
+                                    </div>
+                                    <div class="nytw-segment-option" data-value="defer">
+                                        <i class="fa-solid fa-hourglass-end"></i> <span class="name">结束后处理</span>
+                                    </div>
+                                </div>
+
+                                <div id="nytw_stream_anim_section">
+                                    <div class="nytw-card-divider"></div>
+
+                                    <div class="nytw-card-section">
+                                        <div class="nytw-card-section-header">
+                                            <div class="nytw-card-section-title">
+                                                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                                                <span>流式动画效果</span>
+                                            </div>
+                                            <div class="nytw-card-section-desc">基于实时显示内容的轻量动画（低性能设备友好）</div>
+                                        </div>
+
+                                        <div class="nytw-card-section-body">
+                                            <div class="nytw-anim-stepper" id="nytw_anim_stepper">
+                                            <button class="nytw-stepper-btn prev" type="button"><i class="fa-solid fa-chevron-left"></i></button>
+                                            <div class="nytw-stepper-content" id="nytw_anim_preview_container">
+                                                <!-- Content injected via JS -->
+                                            </div>
+                                            <button class="nytw-stepper-btn next" type="button"><i class="fa-solid fa-chevron-right"></i></button>
+                                        </div>
+                                        <input type="hidden" id="nytw_stream_anim_effect" />
+
+                                        <div class="nytw-creative-row" id="nytw_stream_anim_speed_row">
+                                            <div class="nytw-creative-label" style="margin-bottom: 6px;"><i class="fa-solid fa-gauge-high"></i> 打印速度</div>
+                                            
+                                            <!-- 速度模式选择器 -->
+                                            <div class="nytw-segmented-control nytw-segmented-control--small" id="nytw_speed_mode_control">
+                                                <div class="nytw-segment-option" data-value="fixed">
+                                                    <span class="name">固定速度</span>
+                                                </div>
+                                                <div class="nytw-segment-option" data-value="sync">
+                                                    <span class="name">跟随实际</span>
+                                                </div>
+                                            </div>
+
+                                            <!-- 模式 A：固定速度 -->
+                                            <div id="nytw_speed_fixed_panel" style="margin-top: 8px;">
+                                                <div class="nytw-range-wrapper">
+                                                    <i class="fa-solid fa-tortoise slow-icon"></i>
+                                                    <input id="nytw_stream_anim_speed" type="range" min="3" max="80" step="2" class="nytw-creative-range" />
+                                                    <i class="fa-solid fa-person-running fast-icon"></i>
+                                                </div>
+      <div class="nytw-speed-display" id="nytw_stream_anim_speed_value" style="margin-top: 4px;"></div>
+                                            </div>
+
+                                            <!-- 模式 B：跟随实际 -->
+                                            <div id="nytw_speed_sync_panel" style="margin-top: 8px; display: none;">
+                                                <div class="nytw-stream-anim-hint" style="text-align: center; padding: 4px; color: rgba(255,255,255,0.6);">
+                                                    <i class="fa-solid fa-link"></i> 动画将完全同步文本生成速度
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="nytw-creative-row" id="nytw_stream_anim_cursor_row">
+                                            <div class="nytw-creative-label"><i class="fa-solid fa-terminal"></i> 输入光标</div>
+                                            <div class="nytw-cursor-toggle-wrapper">
+                                                <input id="nytw_stream_anim_cursor" type="checkbox" style="display:none" />
+                                                <label for="nytw_stream_anim_cursor" class="nytw-cursor-btn">
+                                                    <span class="cursor-icon">_</span>
+                                                    <span class="cursor-text">启用光标</span>
+                                                    <span class="cursor-status">OFF</span>
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <div class="nytw-stream-anim-hint" id="nytw_stream_anim_hint"></div>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="nytw-segment-option" data-value="defer">
-                                <i class="fa-solid fa-hourglass-end"></i> <span class="name">结束后处理</span>
+                        </div>
+                    </div>
+                </div>
+
+                    <!-- 独立卡片：字号与间距 -->
+                    <div class="nytw-display-setting-card" id="nytw_typography_card">
+                        <div class="nytw-card-header nytw-card-toggle">
+                            <div class="nytw-card-icon">
+                                <i class="fa-solid fa-text-height"></i>
+                            </div>
+                            <div class="nytw-card-info">
+                                <div class="nytw-card-title">字号 / 字间距</div>
+                            </div>
+                            <div class="nytw-card-chevron">
+                                <i class="fa-solid fa-chevron-down"></i>
                             </div>
                         </div>
 
-                        <div id="nytw_stream_anim_section">
-                            <div class="nytw-card-divider"></div>
-
-                            <div class="nytw-card-section">
-                                <div class="nytw-card-section-header">
-                                    <div class="nytw-card-section-title">
-                                        <i class="fa-solid fa-wand-magic-sparkles"></i>
-                                        <span>流式动画效果</span>
-                                    </div>
-                                    <div class="nytw-card-section-desc">基于实时显示内容的轻量动画（低性能设备友好）</div>
-                                </div>
-
+                        <div class="nytw-card-content">
+                            <div class="nytw-card-body-padding">
                                 <div class="nytw-card-section-body">
-                                    <div class="nytw-anim-stepper" id="nytw_anim_stepper">
-                                    <button class="nytw-stepper-btn prev" type="button"><i class="fa-solid fa-chevron-left"></i></button>
-                                    <div class="nytw-stepper-content" id="nytw_anim_preview_container">
-                                        <!-- Content injected via JS -->
+                                    <div class="nytw-typo-row nytw-typo-head" aria-hidden="true">
+                                        <div></div>
+                                        <div><i class="fa-solid fa-ruler-vertical"></i> 字号 (px)</div>
+                                        <div><i class="fa-solid fa-arrows-left-right-to-line"></i> 字间距 (em)</div>
                                     </div>
-                                    <button class="nytw-stepper-btn next" type="button"><i class="fa-solid fa-chevron-right"></i></button>
+
+                                    <div class="nytw-typo-row" id="nytw_typo_row_body">
+                                        <div class="nytw-typo-type">
+                                            <i class="fa-solid fa-align-left"></i> 正文
+                                        </div>
+                                        <div class="nytw-stepper">
+                                            <button type="button" class="nytw-stepper-btn minus" tabindex="-1"><i class="fa-solid fa-minus"></i></button>
+                                            <input id="nytw_body_font_size" type="number" class="text_pole nytw-typo-input" placeholder="默认" min="6" max="72" step="0.5" />
+                                            <button type="button" class="nytw-stepper-btn plus" tabindex="-1"><i class="fa-solid fa-plus"></i></button>
+                                        </div>
+                                        <div class="nytw-stepper">
+                                            <button type="button" class="nytw-stepper-btn minus" tabindex="-1"><i class="fa-solid fa-minus"></i></button>
+                                            <input id="nytw_body_letter_spacing" type="number" class="text_pole nytw-typo-input" placeholder="默认" min="-0.2" max="0.5" step="0.01" />
+                                            <button type="button" class="nytw-stepper-btn plus" tabindex="-1"><i class="fa-solid fa-plus"></i></button>
+                                        </div>
+                                    </div>
+
+                                    <div class="nytw-typo-row" id="nytw_typo_row_dialogue">
+                                        <div class="nytw-typo-type">
+                                            <i class="fa-solid fa-quote-left"></i> 对话
+                                        </div>
+                                        <div class="nytw-stepper">
+                                            <button type="button" class="nytw-stepper-btn minus" tabindex="-1"><i class="fa-solid fa-minus"></i></button>
+                                            <input id="nytw_dialogue_font_size" type="number" class="text_pole nytw-typo-input" placeholder="默认" min="6" max="72" step="0.5" />
+                                            <button type="button" class="nytw-stepper-btn plus" tabindex="-1"><i class="fa-solid fa-plus"></i></button>
+                                        </div>
+                                        <div class="nytw-stepper">
+                                            <button type="button" class="nytw-stepper-btn minus" tabindex="-1"><i class="fa-solid fa-minus"></i></button>
+                                            <input id="nytw_dialogue_letter_spacing" type="number" class="text_pole nytw-typo-input" placeholder="默认" min="-0.2" max="0.5" step="0.01" />
+                                            <button type="button" class="nytw-stepper-btn plus" tabindex="-1"><i class="fa-solid fa-plus"></i></button>
+                                        </div>
+                                    </div>
+
+                                    <div class="nytw-typo-row" id="nytw_typo_row_custom">
+                                        <div class="nytw-typo-type">
+                                            <i class="fa-solid fa-highlighter"></i> 自定义
+                                        </div>
+                                        <div class="nytw-stepper">
+                                            <button type="button" class="nytw-stepper-btn minus" tabindex="-1"><i class="fa-solid fa-minus"></i></button>
+                                            <input id="nytw_custom_font_size" type="number" class="text_pole nytw-typo-input" placeholder="默认" min="6" max="72" step="0.5" />
+                                            <button type="button" class="nytw-stepper-btn plus" tabindex="-1"><i class="fa-solid fa-plus"></i></button>
+                                        </div>
+                                        <div class="nytw-stepper">
+                                            <button type="button" class="nytw-stepper-btn minus" tabindex="-1"><i class="fa-solid fa-minus"></i></button>
+                                            <input id="nytw_custom_letter_spacing" type="number" class="text_pole nytw-typo-input" placeholder="默认" min="-0.2" max="0.5" step="0.01" />
+                                            <button type="button" class="nytw-stepper-btn plus" tabindex="-1"><i class="fa-solid fa-plus"></i></button>
+                                        </div>
+                                    </div>
+
+                                    <div class="nytw-typo-row" id="nytw_typo_row_locale">
+                                        <div class="nytw-typo-type">
+                                            <i class="fa-solid fa-globe"></i> 多语言
+                                        </div>
+                                        <div class="nytw-stepper">
+                                            <button type="button" class="nytw-stepper-btn minus" tabindex="-1"><i class="fa-solid fa-minus"></i></button>
+                                            <input id="nytw_locale_font_size" type="number" class="text_pole nytw-typo-input" placeholder="默认" min="6" max="72" step="0.5" />
+                                            <button type="button" class="nytw-stepper-btn plus" tabindex="-1"><i class="fa-solid fa-plus"></i></button>
+                                        </div>
+                                        <div class="nytw-stepper">
+                                            <button type="button" class="nytw-stepper-btn minus" tabindex="-1"><i class="fa-solid fa-minus"></i></button>
+                                            <input id="nytw_locale_letter_spacing" type="number" class="text_pole nytw-typo-input" placeholder="默认" min="-0.2" max="0.5" step="0.01" />
+                                            <button type="button" class="nytw-stepper-btn plus" tabindex="-1"><i class="fa-solid fa-plus"></i></button>
+                                        </div>
+                                    </div>
                                 </div>
-                                <input type="hidden" id="nytw_stream_anim_effect" />
-
-                                <div class="nytw-creative-row" id="nytw_stream_anim_speed_row">
-                                    <div class="nytw-creative-label" style="margin-bottom: 6px;"><i class="fa-solid fa-gauge-high"></i> 打印速度</div>
-                                    
-                                    <!-- 速度模式选择器 -->
-                                    <div class="nytw-segmented-control nytw-segmented-control--small" id="nytw_speed_mode_control">
-                                        <div class="nytw-segment-option" data-value="fixed">
-                                            <span class="name">固定速度</span>
-                                        </div>
-                                        <div class="nytw-segment-option" data-value="sync">
-                                            <span class="name">跟随实际</span>
-                                        </div>
-                                    </div>
-
-                                    <!-- 模式 A：固定速度 -->
-                                    <div id="nytw_speed_fixed_panel" style="margin-top: 8px;">
-                                        <div class="nytw-range-wrapper">
-                                            <i class="fa-solid fa-tortoise slow-icon"></i>
-                                            <input id="nytw_stream_anim_speed" type="range" min="3" max="80" step="2" class="nytw-creative-range" />
-                                            <i class="fa-solid fa-person-running fast-icon"></i>
-                                        </div>
-                                        <div class="nytw-speed-display" id="nytw_stream_anim_speed_value" style="margin-top: 4px;"></div>
-                                    </div>
-
-                                    <!-- 模式 B：跟随实际 -->
-                                    <div id="nytw_speed_sync_panel" style="margin-top: 8px; display: none;">
-                                        <div class="nytw-stream-anim-hint" style="text-align: center; padding: 4px; color: rgba(255,255,255,0.6);">
-                                            <i class="fa-solid fa-link"></i> 动画将完全同步文本生成速度
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="nytw-creative-row" id="nytw_stream_anim_cursor_row">
-                                    <div class="nytw-creative-label"><i class="fa-solid fa-terminal"></i> 输入光标</div>
-                                    <div class="nytw-cursor-toggle-wrapper">
-                                        <input id="nytw_stream_anim_cursor" type="checkbox" style="display:none" />
-                                        <label for="nytw_stream_anim_cursor" class="nytw-cursor-btn">
-                                            <span class="cursor-icon">_</span>
-                                            <span class="cursor-text">启用光标</span>
-                                            <span class="cursor-status">OFF</span>
-                                        </label>
-                                    </div>
-                                </div>
-
-                                <div class="nytw-stream-anim-hint" id="nytw_stream_anim_hint"></div>
                             </div>
-                        </div>
                         </div>
                     </div>
 
@@ -345,7 +443,7 @@
                     <!-- Group 0: 核心功能启用说明 (特别样式) -->
                     <div class="nytw-core-help-wrapper">
                         <div class="flex-container alignItemsCenter nytw-row nytw-row--disclosure nytw-help-toggle is-open" id="nytw_core_help_toggle">
-                            <label class="nytw-disclosure-label">
+<label class="nytw-disclosure-label">
                                 <i class="fa-solid fa-circle-info nytw-disclosure-icon" aria-hidden="true"></i>
                                 <span class="nytw-core-title">如何启用字体功能</span>
                             </label>
@@ -409,7 +507,7 @@
                             为被特定符号包裹的文字设置独立字体。<br/><br/>
                             <strong>用法：</strong><br/>
                             设定起始符号（如 <code>『</code>）和结束符号（如 <code>』</code>）。<br/>
-                            聊天中被这些符号包裹的内容将应用指定字体。<br/><br/>
+                            聊天中被这些符号包裹的内容将应用��定字体。<br/><br/>
                             <strong>优先级：</strong><br/>
                             自定义包裹 > 按语言设置 > 对话字体 > 正文字体。
                         </div>
@@ -426,7 +524,7 @@
                         <div class="nytw-help">
                             自动扫描并加载聊天记录与正则脚本中的 CSS 字体链接。<br/><br/>
                             <strong>作用：</strong><br/>
-                            解决酒馆（SillyTavern）净化样式导致消息内的 <code>@import</code> 字体失效的问题。<br/><br/>
+                            解决酒馆（SillyTavern）净化样式导致消息内的 <code>@import</code>字体失效的问题。<br/><br/>
                             <strong>支持格式：</strong><br/>
                             CSS <code>@import</code> 语句或 <code>&lt;style&gt;</code> 标签内的引用。
                         </div>
@@ -444,7 +542,7 @@
                             <strong>实时显示：</strong><br/>
                             在文本生成过程中即时应用字体。体验更流畅。<br/><br/>
                             <strong>结束后处理：</strong><br/>
-                            待整段回复生成完毕后统一应用字体。<br/><br/>
+                        待整段回复生成完毕后统一应用字体。<br/><br/>
                             <i class="fa-solid fa-triangle-exclamation"></i> “实时显示”如遇兼容问题（如字体闪烁、排版错乱），请切回“结束后处理”。
                         </div>
                     </div>
@@ -461,7 +559,7 @@
                             管理插件使用的额外字体资源。<br/><br/>
                             <strong>Web 字体：</strong><br/>
                             粘贴 CSS 链接（如 Google Fonts）进行导入。<br/><br/>
-                            <strong>本地文件：</strong><br/>
+                           <strong>本地文件：</strong><br/>
                             上传 .woff2, .ttf, .otf 等字体文件。文件将存储在浏览器本地数据库中。<br/><br/>
                             导入后可在字体选择器的下拉列表中找到这些字体。
                         </div>

@@ -37,6 +37,14 @@ export const DEFAULT_SETTINGS = {
     localeFonts: [],
     importedFonts: [],
     chatFontImportEnabled: false,
+    bodyFontSize: null,
+    bodyLetterSpacing: null,
+    dialogueFontSize: null,
+    dialogueLetterSpacing: null,
+    customFontSize: null,
+    customLetterSpacing: null,
+    localeFontSize: null,
+    localeLetterSpacing: null,
     streamRenderMode: 'defer',
     streamAnimEffect: 'none',
     streamAnimSpeed: 20,
@@ -65,6 +73,28 @@ export function clampStreamAnimSpeed(value) {
     return Math.min(80, Math.max(3, Math.round(num)));
 }
 
+function parseOptionalNumber(value) {
+    if (value === undefined || value === null) return null;
+    if (typeof value === 'string' && value.trim() === '') return null;
+    const num = typeof value === 'string' ? Number.parseFloat(value) : Number(value);
+    return Number.isFinite(num) ? num : null;
+}
+
+export function clampOptionalFontSize(value) {
+    const num = parseOptionalNumber(value);
+    if (num === null) return null;
+    if (num <= 0) return null;
+    const clamped = Math.min(72, Math.max(6, num));
+    return Math.round(clamped * 2) / 2; // 0.5px steps
+}
+
+export function clampOptionalLetterSpacing(value) {
+    const num = parseOptionalNumber(value);
+    if (num === null) return null;
+    const clamped = Math.min(0.5, Math.max(-0.2, num));
+    return Math.round(clamped * 100) / 100; // 0.01em steps
+}
+
 export function getStreamRenderMode() {
     return normalizeStreamRenderMode(settings.streamRenderMode);
 }
@@ -83,6 +113,14 @@ function applyDefaultSettings() {
     settings.streamAnimEffect = normalizeStreamAnimEffect(settings.streamAnimEffect);
     settings.streamAnimSpeed = clampStreamAnimSpeed(settings.streamAnimSpeed);
     settings.streamAnimCursor = Boolean(settings.streamAnimCursor);
+    settings.bodyFontSize = clampOptionalFontSize(settings.bodyFontSize);
+    settings.bodyLetterSpacing = clampOptionalLetterSpacing(settings.bodyLetterSpacing);
+    settings.dialogueFontSize = clampOptionalFontSize(settings.dialogueFontSize);
+    settings.dialogueLetterSpacing = clampOptionalLetterSpacing(settings.dialogueLetterSpacing);
+    settings.customFontSize = clampOptionalFontSize(settings.customFontSize);
+    settings.customLetterSpacing = clampOptionalLetterSpacing(settings.customLetterSpacing);
+    settings.localeFontSize = clampOptionalFontSize(settings.localeFontSize);
+    settings.localeLetterSpacing = clampOptionalLetterSpacing(settings.localeLetterSpacing);
 
     if (!hadCustomFontWrapEnabled) {
         const hasCustomFont = Boolean(String(settings.customFont || '').trim());
