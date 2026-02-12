@@ -173,6 +173,16 @@ export function initFontSettingsTab() {
         scheduleScan();
     }, 200);
 
+    const globalEl = document.getElementById('nytw_global_font');
+    const globalPopup = document.getElementById('nytw_global_font_popup');
+    if (globalEl instanceof HTMLInputElement && globalPopup) {
+        globalEl.value = settings.globalFont || '';
+        setupFontPicker(globalEl, globalPopup, (val) => {
+            settings.globalFont = val;
+            debouncedSaveAndApply();
+        });
+    }
+
     const bodyEl = document.getElementById('nytw_body_font');
     const bodyPopup = document.getElementById('nytw_body_font_popup');
     if (bodyEl instanceof HTMLInputElement && bodyPopup) {
@@ -369,6 +379,17 @@ export function initFontSettingsTab() {
             });
         }
     }
+
+    const globalClear = document.getElementById('nytw_global_font_clear');
+    globalClear?.addEventListener('click', () => {
+        settings.globalFont = '';
+        if (globalEl instanceof HTMLInputElement) {
+            globalEl.value = '';
+            globalEl.style.fontFamily = '';
+        }
+        saveSettingsDebounced();
+        queueApplyFonts();
+    });
 
     const bodyClear = document.getElementById('nytw_body_font_clear');
     bodyClear?.addEventListener('click', () => {

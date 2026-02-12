@@ -1,7 +1,17 @@
 import { saveSettingsDebounced } from '../../../../script.js';
 import { applyTypographyVariables, queueApplyFonts, scheduleScan } from './nytwCore.js';
 import { debounce } from './nytwUtils.js';
-import { clampOptionalFontSize, clampOptionalLetterSpacing, clampStreamAnimSpeed, normalizeStreamAnimEffect, normalizeStreamRenderMode, settings } from './nytwState.js';
+import {
+    clampOptionalFontSize,
+    clampOptionalLetterSpacing,
+    clampStreamAnimSpeed,
+    normalizeStreamAnimEffect,
+    normalizeStreamCursorAnim,
+    normalizeStreamCursorImageUrl,
+    normalizeStreamCursorShape,
+    normalizeStreamRenderMode,
+    settings,
+} from './nytwState.js';
 
 export function initDisplaySettingsTab() {
     const renderModeSelectEls = [
@@ -41,6 +51,11 @@ export function initDisplaySettingsTab() {
     const streamAnimSpeedSyncPanel = document.getElementById('nytw_speed_sync_panel');
     const streamAnimCursorRowEl = document.getElementById('nytw_stream_anim_cursor_row');
     const streamAnimCursorEl = document.getElementById('nytw_stream_anim_cursor');
+    const streamAnimCursorConfigEl = document.getElementById('nytw_stream_anim_cursor_config');
+    const streamAnimCursorShapeEl = document.getElementById('nytw_stream_anim_cursor_shape');
+    const streamAnimCursorAnimEl = document.getElementById('nytw_stream_anim_cursor_anim');
+    const streamAnimCursorImageRowEl = document.getElementById('nytw_stream_anim_cursor_image_row');
+    const streamAnimCursorImageUrlEl = document.getElementById('nytw_stream_anim_cursor_image_url');
 
     const typoRowCustomEl = document.getElementById('nytw_typo_row_custom');
     const typoRowLocaleEl = document.getElementById('nytw_typo_row_locale');
@@ -175,6 +190,16 @@ export function initDisplaySettingsTab() {
         });
     };
 
+    const toCssUrlValue = (value) => {
+        const raw = String(value ?? '').trim();
+        if (!raw) return 'none';
+        const escaped = raw
+            .replace(/\\/g, '\\\\')
+            .replace(/"/g, '\\"')
+            .replace(/[\r\n\f]/g, '');
+        return `url("${escaped}")`;
+    };
+
     const syncStreamAnimUi = () => {
         const mode = normalizeStreamRenderMode(settings.streamRenderMode);
         const isBuffer = mode === 'buffer';
@@ -184,8 +209,30 @@ export function initDisplaySettingsTab() {
         }
 
         const effect = normalizeStreamAnimEffect(settings.streamAnimEffect);
+        const cursorEnabled = true; // Always enable cursor
+        const cursorShape = normalizeStreamCursorShape(settings.streamAnimCursorShape);
+        const cursorAnim = normalizeStreamCursorAnim(settings.streamAnimCursorAnim);
+        const cursorImageUrl = normalizeStreamCursorImageUrl(settings.streamAnimCursorImageUrl);
+        const cursorShapeIconMap = {
+            bar: '|',
+            thin: '│',
+            block: '█',
+            hollow: '□',
+            underscore: '_',
+            image: '▣',
+        };
+
         if (streamAnimEffectEl && (streamAnimEffectEl instanceof HTMLSelectElement || streamAnimEffectEl instanceof HTMLInputElement)) {
             streamAnimEffectEl.value = effect;
+        }
+        if (streamAnimCursorShapeEl instanceof HTMLSelectElement) {
+            streamAnimCursorShapeEl.value = cursorShape;
+        }
+        if (streamAnimCursorAnimEl instanceof HTMLSelectElement) {
+            streamAnimCursorAnimEl.value = cursorAnim;
+        }
+        if (streamAnimCursorImageUrlEl instanceof HTMLInputElement) {
+            streamAnimCursorImageUrlEl.value = cursorImageUrl;
         }
 
         // Stepper UI Sync
@@ -217,8 +264,14 @@ export function initDisplaySettingsTab() {
                 // Only some effects need text span
                 if (effect !== 'none') {
                     const span = document.createElement('span');
-                    span.textContent = effect === 'typewriter' ? 'A_' : 'Aa';
+                    span.textContent = 'Aa';
                     previewEl.appendChild(span);
+                }
+                if (effect === 'typewriter') {
+                    previewEl.dataset.cursorEnabled = cursorEnabled ? '1' : '0';
+                    previewEl.dataset.cursorShape = cursorShape;
+                    previewEl.dataset.cursorAnim = cursorAnim;
+                    previewEl.style.setProperty('--nytw-preview-cursor-image', toCssUrlValue(cursorImageUrl));
                 }
                 
                 const labelEl = document.createElement('div');
@@ -250,6 +303,9 @@ export function initDisplaySettingsTab() {
         const showTypewriter = effect === 'typewriter';
         if (streamAnimSpeedRowEl) streamAnimSpeedRowEl.style.display = showTypewriter ? '' : 'none';
         if (streamAnimCursorRowEl) streamAnimCursorRowEl.style.display = showTypewriter ? '' : 'none';
+        if (streamAnimCursorImageRowEl) {
+            streamAnimCursorImageRowEl.style.display = (showTypewriter && cursorShape === 'image') ? '' : 'none';
+        }
 
         // Speed UI Sync
         const currentSpeed = settings.streamAnimSpeed;
@@ -283,14 +339,7 @@ export function initDisplaySettingsTab() {
         }
 
         if (streamAnimCursorEl instanceof HTMLInputElement) {
-            streamAnimCursorEl.checked = Boolean(settings.streamAnimCursor);
-            
-            // Sync custom cursor button UI
-            const wrapper = document.querySelector('.nytw-cursor-toggle-wrapper');
-            if (wrapper) {
-                const statusText = wrapper.querySelector('.cursor-status');
-                if (statusText) statusText.textContent = streamAnimCursorEl.checked ? 'ON' : 'OFF';
-            }
+            streamAnimCursorEl.checked = cursorEnabled;
         }
 
         if (streamAnimHintEl) {
@@ -405,15 +454,39 @@ export function initDisplaySettingsTab() {
     if (streamAnimCursorEl instanceof HTMLInputElement) {
         streamAnimCursorEl.addEventListener('change', () => {
             settings.streamAnimCursor = streamAnimCursorEl.checked;
-            // Immediate update of status text
-            const wrapper = document.querySelector('.nytw-cursor-toggle-wrapper');
-            if (wrapper) {
-                const statusText = wrapper.querySelector('.cursor-status');
-                if (statusText) statusText.textContent = streamAnimCursorEl.checked ? 'ON' : 'OFF';
-            }
+            syncStreamAnimUi();
             saveSettingsDebounced();
             scheduleScan({ full: false });
         });
+    }
+
+    if (streamAnimCursorShapeEl instanceof HTMLSelectElement) {
+        streamAnimCursorShapeEl.addEventListener('change', () => {
+            settings.streamAnimCursorShape = normalizeStreamCursorShape(streamAnimCursorShapeEl.value);
+            syncStreamAnimUi();
+            saveSettingsDebounced();
+            scheduleScan({ full: false });
+        });
+    }
+
+    if (streamAnimCursorAnimEl instanceof HTMLSelectElement) {
+        streamAnimCursorAnimEl.addEventListener('change', () => {
+            settings.streamAnimCursorAnim = normalizeStreamCursorAnim(streamAnimCursorAnimEl.value);
+            syncStreamAnimUi();
+            saveSettingsDebounced();
+            scheduleScan({ full: false });
+        });
+    }
+
+    if (streamAnimCursorImageUrlEl instanceof HTMLInputElement) {
+        const updateCursorImageUrl = () => {
+            settings.streamAnimCursorImageUrl = normalizeStreamCursorImageUrl(streamAnimCursorImageUrlEl.value);
+            syncStreamAnimUi();
+            saveSettingsDebounced();
+            scheduleScan({ full: false });
+        };
+        streamAnimCursorImageUrlEl.addEventListener('input', updateCursorImageUrl);
+        streamAnimCursorImageUrlEl.addEventListener('change', updateCursorImageUrl);
     }
 
     // Typography controls

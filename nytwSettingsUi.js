@@ -38,7 +38,8 @@ export async function setupSettingsUi() {
         return true;
     };
 
-    const migratedAny = migrateFontSettingToDisplayLabel('bodyFont')
+    const migratedAny = migrateFontSettingToDisplayLabel('globalFont')
+        || migrateFontSettingToDisplayLabel('bodyFont')
         || migrateFontSettingToDisplayLabel('dialogueFont')
         || migrateFontSettingToDisplayLabel('customFont');
     if (migratedAny) saveSettingsDebounced();

@@ -1,7 +1,17 @@
-﻿﻿import { eventSource, event_types, streamingProcessor } from '../../../../script.js';
+﻿﻿﻿﻿﻿﻿﻿﻿import { eventSource, event_types, streamingProcessor } from '../../../../script.js';
 import { applyCustomIndependentFont, CUSTOM_INDEPENDENT_FONT_CLASS, CUSTOM_INDEPENDENT_FONT_MARK_ATTR } from './customIndependentFont.js';
 import { morphdom } from '../../../../lib.js';
-import { clampOptionalFontSize, clampOptionalLetterSpacing, clampStreamAnimSpeed, getStreamRenderMode, normalizeStreamAnimEffect, settings } from './nytwState.js';
+import {
+    clampOptionalFontSize,
+    clampOptionalLetterSpacing,
+    clampStreamAnimSpeed,
+    getStreamRenderMode,
+    normalizeStreamAnimEffect,
+    normalizeStreamCursorAnim,
+    normalizeStreamCursorImageUrl,
+    normalizeStreamCursorShape,
+    settings,
+} from './nytwState.js';
 import { LOCALE_KEY_PRIORITY, UNICODE_RANGES } from './nytwLocaleData.js';
 import {
     buildFontFaceCssForFamilies,
@@ -25,6 +35,8 @@ const STREAM_RENDER_ATTR = 'data-nytw-stream-render';
 const STREAM_BUFFER_CLASS = 'nytw-stream-buffer';
 const STREAM_ANIM_ATTR = 'data-nytw-stream-anim';
 const STREAM_CURSOR_ATTR = 'data-nytw-stream-cursor';
+const STREAM_CURSOR_SHAPE_ATTR = 'data-nytw-stream-cursor-shape';
+const STREAM_CURSOR_ANIM_ATTR = 'data-nytw-stream-cursor-anim';
 const STREAM_SEG_CLASS = 'nytw-stream-seg';
 const STREAM_SEG_NEW_ATTR = 'data-nytw-stream-new';
 const STREAM_SEG_BR_ATTR = 'data-nytw-stream-br';
@@ -34,6 +46,7 @@ const STREAM_BLOCK_HIDDEN_ATTR = 'data-nytw-stream-block-hidden';
 const STREAM_SEG_COUNT_DATA = 'nytwStreamSegCount';
 const STREAM_SHOWN_COUNT_DATA = 'nytwStreamShownCount';
 const STREAM_STEP_VAR = '--nytw-stream-step';
+const STREAM_CURSOR_IMAGE_VAR = '--nytw-stream-cursor-image';
 
 const LOCALE_FONT_ATTR = 'data-nytw-locale-font';
 const LOCALE_WRAP_ATTR = 'data-nytw-locale-wrap';
@@ -140,6 +153,7 @@ async function applyFontSettings() {
         return;
     }
 
+    const globalFontCss = toCssFontFamilyValue(settings.globalFont);
     const bodyFontCss = toCssFontFamilyValue(settings.bodyFont);
     const dialogueFontCss = toCssFontFamilyValue(settings.dialogueFont);
     const customFontCss = toCssFontFamilyValue(settings.customFont);
@@ -152,6 +166,7 @@ async function applyFontSettings() {
     }
 
     const families = [
+        ...parseFontFamilyList(globalFontCss),
         ...parseFontFamilyList(bodyFontCss),
         ...parseFontFamilyList(dialogueFontCss),
         ...parseFontFamilyList(customFontCss),
@@ -165,6 +180,15 @@ async function applyFontSettings() {
         css += await buildFontFaceCssForFamilies(families);
     } catch (error) {
         console.error('[NyTW] Failed to build @font-face rules', error);
+    }
+
+    if (globalFontCss) {
+        css += '\n/* Global Font Override */\n';
+        css += `\nbody{font-family:${globalFontCss} !important;}`;
+        css += `\n#sillytavern{font-family:${globalFontCss} !important;}`;
+        css += `\ninput,textarea,select,button{font-family:${globalFontCss} !important;}`;
+        // Ensure chat message body also follows the global font when bodyFont is not set.
+        css += `\n#chat .mes_text{font-family:${globalFontCss} !important;}`;
     }
 
     if (bodyFontCss) {
@@ -236,14 +260,36 @@ async function applyFontSettings() {
         `\n#chat .mes.${STREAMING_MESSAGE_CLASS}[${STREAM_RENDER_ATTR}="buffer"][${STREAM_ANIM_ATTR}="blur"] .mes_text.${STREAM_BUFFER_CLASS} .${STREAM_SEG_CLASS}[${STREAM_SEG_NEW_ATTR}]{opacity:0;filter:blur(10px);animation:nytw-stream-blur-in 320ms cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--nytw-stream-i, 0) * 12ms);}`,
         `\n#chat .mes.${STREAMING_MESSAGE_CLASS}[${STREAM_RENDER_ATTR}="buffer"][${STREAM_ANIM_ATTR}="glow"] .mes_text.${STREAM_BUFFER_CLASS} .${STREAM_SEG_CLASS}[${STREAM_SEG_NEW_ATTR}]{opacity:0;text-shadow:0 0 0 rgba(120,180,255,.0);animation:nytw-stream-glow-in 420ms cubic-bezier(.18,.89,.32,1.05) both;animation-delay:calc(var(--nytw-stream-i, 0) * 10ms);}`,
         `\n#chat .mes.${STREAMING_MESSAGE_CLASS}[${STREAM_RENDER_ATTR}="buffer"][${STREAM_CURSOR_ATTR}="1"] .mes_text.${STREAM_BUFFER_CLASS} .${STREAM_CURSOR_CLASS}{display:inline-block;position:relative;width:0;height:1em;vertical-align:-0.1em;pointer-events:none;}`,
-        `\n#chat .mes.${STREAMING_MESSAGE_CLASS}[${STREAM_RENDER_ATTR}="buffer"][${STREAM_CURSOR_ATTR}="1"] .mes_text.${STREAM_BUFFER_CLASS} .${STREAM_CURSOR_CLASS}::after{content:"";position:absolute;left:0;top:0.1em;bottom:0.1em;width:2px;background:currentColor;opacity:.9;animation:nytw-stream-caret 1s steps(1,end) infinite;}`,
+        `\n#chat .mes.${STREAMING_MESSAGE_CLASS}[${STREAM_RENDER_ATTR}="buffer"][${STREAM_CURSOR_ATTR}="1"] .mes_text.${STREAM_BUFFER_CLASS} .${STREAM_CURSOR_CLASS}::after{content:"";position:absolute;left:0;top:0.1em;bottom:0.1em;width:2px;background:currentColor;border-radius:1px;opacity:.9;transform-origin:center;}`,
+        `\n#chat .mes.${STREAMING_MESSAGE_CLASS}[${STREAM_RENDER_ATTR}="buffer"][${STREAM_CURSOR_ATTR}="1"][${STREAM_CURSOR_SHAPE_ATTR}="bar"] .mes_text.${STREAM_BUFFER_CLASS} .${STREAM_CURSOR_CLASS}{width:0;}`,
+        `\n#chat .mes.${STREAMING_MESSAGE_CLASS}[${STREAM_RENDER_ATTR}="buffer"][${STREAM_CURSOR_ATTR}="1"][${STREAM_CURSOR_SHAPE_ATTR}="bar"] .mes_text.${STREAM_BUFFER_CLASS} .${STREAM_CURSOR_CLASS}::after{left:0;top:0.1em;bottom:0.1em;width:2px;height:auto;}`,
+        `\n#chat .mes.${STREAMING_MESSAGE_CLASS}[${STREAM_RENDER_ATTR}="buffer"][${STREAM_CURSOR_ATTR}="1"][${STREAM_CURSOR_SHAPE_ATTR}="thin"] .mes_text.${STREAM_BUFFER_CLASS} .${STREAM_CURSOR_CLASS}{width:0;}`,
+        `\n#chat .mes.${STREAMING_MESSAGE_CLASS}[${STREAM_RENDER_ATTR}="buffer"][${STREAM_CURSOR_ATTR}="1"][${STREAM_CURSOR_SHAPE_ATTR}="thin"] .mes_text.${STREAM_BUFFER_CLASS} .${STREAM_CURSOR_CLASS}::after{left:0;top:0.1em;bottom:0.1em;width:1px;height:auto;}`,
+        `\n#chat .mes.${STREAMING_MESSAGE_CLASS}[${STREAM_RENDER_ATTR}="buffer"][${STREAM_CURSOR_ATTR}="1"][${STREAM_CURSOR_SHAPE_ATTR}="block"] .mes_text.${STREAM_BUFFER_CLASS} .${STREAM_CURSOR_CLASS}{width:0;}`,
+        `\n#chat .mes.${STREAMING_MESSAGE_CLASS}[${STREAM_RENDER_ATTR}="buffer"][${STREAM_CURSOR_ATTR}="1"][${STREAM_CURSOR_SHAPE_ATTR}="block"] .mes_text.${STREAM_BUFFER_CLASS} .${STREAM_CURSOR_CLASS}::after{left:0;top:0.08em;bottom:0.08em;width:.62em;height:auto;border-radius:2px;opacity:.55;}`,
+        `\n#chat .mes.${STREAMING_MESSAGE_CLASS}[${STREAM_RENDER_ATTR}="buffer"][${STREAM_CURSOR_ATTR}="1"][${STREAM_CURSOR_SHAPE_ATTR}="hollow"] .mes_text.${STREAM_BUFFER_CLASS} .${STREAM_CURSOR_CLASS}{width:0;}`,
+        `\n#chat .mes.${STREAMING_MESSAGE_CLASS}[${STREAM_RENDER_ATTR}="buffer"][${STREAM_CURSOR_ATTR}="1"][${STREAM_CURSOR_SHAPE_ATTR}="hollow"] .mes_text.${STREAM_BUFFER_CLASS} .${STREAM_CURSOR_CLASS}::after{left:0;top:0.08em;bottom:0.08em;width:.62em;height:auto;background:transparent;border:2px solid currentColor;border-radius:2px;opacity:.8;}`,
+        `\n#chat .mes.${STREAMING_MESSAGE_CLASS}[${STREAM_RENDER_ATTR}="buffer"][${STREAM_CURSOR_ATTR}="1"][${STREAM_CURSOR_SHAPE_ATTR}="underscore"] .mes_text.${STREAM_BUFFER_CLASS} .${STREAM_CURSOR_CLASS}{width:0;}`,
+        `\n#chat .mes.${STREAMING_MESSAGE_CLASS}[${STREAM_RENDER_ATTR}="buffer"][${STREAM_CURSOR_ATTR}="1"][${STREAM_CURSOR_SHAPE_ATTR}="underscore"] .mes_text.${STREAM_BUFFER_CLASS} .${STREAM_CURSOR_CLASS}::after{left:0;top:auto;bottom:0.1em;width:.62em;height:2px;border-radius:1px;opacity:.9;}`,
+        `\n#chat .mes.${STREAMING_MESSAGE_CLASS}[${STREAM_RENDER_ATTR}="buffer"][${STREAM_CURSOR_ATTR}="1"][${STREAM_CURSOR_SHAPE_ATTR}="image"] .mes_text.${STREAM_BUFFER_CLASS} .${STREAM_CURSOR_CLASS}{width:0;}`,
+        `\n#chat .mes.${STREAMING_MESSAGE_CLASS}[${STREAM_RENDER_ATTR}="buffer"][${STREAM_CURSOR_ATTR}="1"][${STREAM_CURSOR_SHAPE_ATTR}="image"] .mes_text.${STREAM_BUFFER_CLASS} .${STREAM_CURSOR_CLASS}::after{left:0;top:0;bottom:auto;width:1em;height:1em;background:transparent;background-image:var(${STREAM_CURSOR_IMAGE_VAR},none);background-position:center;background-repeat:no-repeat;background-size:contain;border:none;border-radius:0;opacity:1;}`,
+        `\n#chat .mes.${STREAMING_MESSAGE_CLASS}[${STREAM_RENDER_ATTR}="buffer"][${STREAM_CURSOR_ATTR}="1"][${STREAM_CURSOR_ANIM_ATTR}="blink"] .mes_text.${STREAM_BUFFER_CLASS} .${STREAM_CURSOR_CLASS}::after{animation:nytw-stream-caret-blink 1s steps(1,end) infinite;}`,
+        `\n#chat .mes.${STREAMING_MESSAGE_CLASS}[${STREAM_RENDER_ATTR}="buffer"][${STREAM_CURSOR_ATTR}="1"][${STREAM_CURSOR_ANIM_ATTR}="smooth"] .mes_text.${STREAM_BUFFER_CLASS} .${STREAM_CURSOR_CLASS}::after{animation:nytw-stream-caret-smooth 1.5s ease-in-out infinite;}`,
+        `\n#chat .mes.${STREAMING_MESSAGE_CLASS}[${STREAM_RENDER_ATTR}="buffer"][${STREAM_CURSOR_ATTR}="1"][${STREAM_CURSOR_ANIM_ATTR}="pulse"] .mes_text.${STREAM_BUFFER_CLASS} .${STREAM_CURSOR_CLASS}::after{animation:nytw-stream-caret-pulse 1.2s ease-in-out infinite;}`,
+        `\n#chat .mes.${STREAMING_MESSAGE_CLASS}[${STREAM_RENDER_ATTR}="buffer"][${STREAM_CURSOR_ATTR}="1"][${STREAM_CURSOR_ANIM_ATTR}="elastic"] .mes_text.${STREAM_BUFFER_CLASS} .${STREAM_CURSOR_CLASS}::after{animation:nytw-stream-caret-elastic 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;}`,
+        `\n#chat .mes.${STREAMING_MESSAGE_CLASS}[${STREAM_RENDER_ATTR}="buffer"][${STREAM_CURSOR_ATTR}="1"][${STREAM_CURSOR_ANIM_ATTR}="glitch"] .mes_text.${STREAM_BUFFER_CLASS} .${STREAM_CURSOR_CLASS}::after{animation:nytw-stream-caret-glitch 2s steps(1) infinite;}`,
+        `\n#chat .mes.${STREAMING_MESSAGE_CLASS}[${STREAM_RENDER_ATTR}="buffer"][${STREAM_CURSOR_ATTR}="1"][${STREAM_CURSOR_ANIM_ATTR}="solid"] .mes_text.${STREAM_BUFFER_CLASS} .${STREAM_CURSOR_CLASS}::after{animation:none;opacity:.9;}`,
         '\n@keyframes nytw-stream-tw-in{from{opacity:0;transform:translateY(3px);}to{opacity:1;transform:none;}}',
         '\n@keyframes nytw-stream-blur-in{0%{opacity:0;filter:blur(10px);}100%{opacity:1;filter:blur(0);}}',
         '\n@keyframes nytw-stream-glow-in{0%{opacity:0;transform:translateY(3px);text-shadow:0 0 0 rgba(120,180,255,.0);}55%{opacity:1;text-shadow:0 0 12px rgba(120,180,255,.55);}100%{opacity:1;transform:none;text-shadow:0 0 0 rgba(120,180,255,.0);}}',
-        '\n@keyframes nytw-stream-caret{0%,49%{opacity:1;}50%,100%{opacity:0;}}',
+        '\n@keyframes nytw-stream-caret-blink{0%,49%{opacity:1;}50%,100%{opacity:0;}}',
+        '\n@keyframes nytw-stream-caret-smooth{0%,100%{opacity:0;}50%{opacity:1;}}',
+        '\n@keyframes nytw-stream-caret-pulse{0%,100%{opacity:.35;}50%{opacity:1;}}',
+        '\n@keyframes nytw-stream-caret-elastic{0%,100%{transform:scaleY(1);opacity:.9;}50%{transform:scaleY(.6);opacity:.5;}}',
+        '\n@keyframes nytw-stream-caret-glitch{0%{opacity:1;transform:translate(0,0);}5%{opacity:0;transform:translate(-2px,2px);}10%{opacity:1;transform:translate(2px,-2px);}15%{opacity:0;}20%{opacity:1;transform:translate(0,0);}40%{opacity:1;}42%{opacity:.5;transform:skewX(20deg);}44%{opacity:1;transform:skewX(0);}80%{opacity:1;}82%{opacity:0;}84%{opacity:1;}100%{opacity:1;}}',
         '\n@media (prefers-reduced-motion: reduce){',
         `\n  #chat .mes.${STREAMING_MESSAGE_CLASS}[${STREAM_RENDER_ATTR}="buffer"][${STREAM_ANIM_ATTR}] .mes_text.${STREAM_BUFFER_CLASS} .${STREAM_SEG_CLASS}[${STREAM_SEG_NEW_ATTR}]{animation:none !important;opacity:1 !important;filter:none !important;transform:none !important;text-shadow:none !important;}`,
-        `\n  #chat .mes.${STREAMING_MESSAGE_CLASS}[${STREAM_RENDER_ATTR}="buffer"][${STREAM_CURSOR_ATTR}="1"] .mes_text.${STREAM_BUFFER_CLASS} .${STREAM_CURSOR_CLASS}::after{animation:none !important;opacity:0 !important;}`,
+        `\n  #chat .mes.${STREAMING_MESSAGE_CLASS}[${STREAM_RENDER_ATTR}="buffer"][${STREAM_CURSOR_ATTR}="1"] .mes_text.${STREAM_BUFFER_CLASS} .${STREAM_CURSOR_CLASS}::after{animation:none !important;opacity:.85 !important;}`,
         '\n}',
         '\n',
     ].join('');
@@ -1137,7 +1183,10 @@ function cleanupStreamingBuffer(messageEl) {
     messageEl.removeAttribute(STREAM_RENDER_ATTR);
     messageEl.removeAttribute(STREAM_ANIM_ATTR);
     messageEl.removeAttribute(STREAM_CURSOR_ATTR);
+    messageEl.removeAttribute(STREAM_CURSOR_SHAPE_ATTR);
+    messageEl.removeAttribute(STREAM_CURSOR_ANIM_ATTR);
     messageEl.style?.removeProperty?.(STREAM_STEP_VAR);
+    messageEl.style?.removeProperty?.(STREAM_CURSOR_IMAGE_VAR);
     messageEl.style?.removeProperty?.('--nytw-stream-p-mt');
     messageEl.style?.removeProperty?.('--nytw-stream-p-mb');
     messageEl.style?.removeProperty?.('--nytw-stream-p-mb-last');
@@ -1586,7 +1635,7 @@ function syncStreamingMessageClass() {
             cleanupStreamingBuffer(el);
         });
 
-        document.querySelectorAll(`#chat .mes[${STREAM_RENDER_ATTR}], #chat .mes[${STREAM_ANIM_ATTR}], #chat .mes[${STREAM_CURSOR_ATTR}]`).forEach((el) => {
+        document.querySelectorAll(`#chat .mes[${STREAM_RENDER_ATTR}], #chat .mes[${STREAM_ANIM_ATTR}], #chat .mes[${STREAM_CURSOR_ATTR}], #chat .mes[${STREAM_CURSOR_SHAPE_ATTR}], #chat .mes[${STREAM_CURSOR_ANIM_ATTR}]`).forEach((el) => {
             if (!(el instanceof HTMLElement)) return;
             el.classList.remove(STREAMING_MESSAGE_CLASS);
             cleanupStreamingBuffer(el);
@@ -1597,7 +1646,11 @@ function syncStreamingMessageClass() {
     const mode = getStreamRenderMode();
     const animEffect = normalizeStreamAnimEffect(settings.streamAnimEffect);
     const stepMs = clampStreamAnimSpeed(settings.streamAnimSpeed);
-    const cursorEnabled = Boolean(settings.streamAnimCursor) && animEffect === 'typewriter';
+    const cursorEnabled = animEffect === 'typewriter';
+    const cursorShape = normalizeStreamCursorShape(settings.streamAnimCursorShape);
+    const cursorAnim = normalizeStreamCursorAnim(settings.streamAnimCursorAnim);
+    const cursorImageUrl = normalizeStreamCursorImageUrl(settings.streamAnimCursorImageUrl);
+    const cursorImageCssValue = cursorImageUrl ? `url(${cssQuote(cursorImageUrl)})` : '';
     const activeId = getActiveStreamingMessageId();
 
     document.querySelectorAll(`#chat .mes.${STREAMING_MESSAGE_CLASS}`).forEach((el) => {
@@ -1622,8 +1675,18 @@ function syncStreamingMessageClass() {
             }
             if (cursorEnabled) {
                 activeEl.setAttribute(STREAM_CURSOR_ATTR, '1');
+                activeEl.setAttribute(STREAM_CURSOR_SHAPE_ATTR, cursorShape);
+                activeEl.setAttribute(STREAM_CURSOR_ANIM_ATTR, cursorAnim);
+                if (cursorShape === 'image' && cursorImageCssValue) {
+                    activeEl.style?.setProperty?.(STREAM_CURSOR_IMAGE_VAR, cursorImageCssValue);
+                } else {
+                    activeEl.style?.removeProperty?.(STREAM_CURSOR_IMAGE_VAR);
+                }
             } else {
                 activeEl.removeAttribute(STREAM_CURSOR_ATTR);
+                activeEl.removeAttribute(STREAM_CURSOR_SHAPE_ATTR);
+                activeEl.removeAttribute(STREAM_CURSOR_ANIM_ATTR);
+                activeEl.style?.removeProperty?.(STREAM_CURSOR_IMAGE_VAR);
             }
             activeEl.style?.setProperty?.(STREAM_STEP_VAR, `${stepMs}ms`);
 

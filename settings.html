@@ -45,8 +45,28 @@
                         
                         <div style="margin-top: 10px;"></div>
 
-                        <!-- 正文 -->
-                        <div class="flex-container alignItemsCenter nytw-row">
+                        <!-- 全局/正文/对话字体（统一分组样式） -->
+                        <div class="nytw-font-overrides" aria-label="字体覆盖输入项">
+                            <div class="flex-container alignItemsCenter nytw-row nytw-row--font-override">
+                            <label for="nytw_global_font" class="nytw-label">全局字体</label>
+                            <div class="nytw-input-wrapper">
+                                <input id="nytw_global_font"
+                                    type="text"
+                                    class="text_pole nytw-input nytw-font-input"
+                                    placeholder="（留空表示默认）"
+                                    autocomplete="off" />
+                                <div class="nytw-font-picker-popup" id="nytw_global_font_popup"></div>
+                            </div>
+                            <button id="nytw_global_font_clear"
+                                    class="menu_button nytw-icon-button"
+                                    type="button"
+                                    title="清除"
+                                    aria-label="清除">
+                                <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                            </button>
+                        </div>
+
+                            <div class="flex-container alignItemsCenter nytw-row nytw-row--font-override">
                             <label for="nytw_body_font" class="nytw-label">正文字体</label>
                             <div class="nytw-input-wrapper">
                                 <input id="nytw_body_font"
@@ -66,13 +86,13 @@
                         </div>
 
                         <!-- 对话独立字体 -->
-                        <div class="flex-container alignItemsCenter nytw-row">
+                            <div class="flex-container alignItemsCenter nytw-row nytw-row--font-override">
                             <label for="nytw_dialogue_font" class="nytw-label">对话字体</label>
                             <div class="nytw-input-wrapper">
                                 <input id="nytw_dialogue_font"
                                     type="text"
                                     class="text_pole nytw-input nytw-font-input"
-                                    placeholder="（留空表示默认���"
+                                    placeholder="（留空表示默认）"
                                     autocomplete="off" />
                                 <div class="nytw-font-picker-popup" id="nytw_dialogue_font_popup"></div>
                             </div>
@@ -83,6 +103,8 @@
                                     aria-label="清除">
                                 <i class="fa-solid fa-xmark" aria-hidden="true"></i>
                             </button>
+                        </div>
+
                         </div>
 
                         <!-- 按语言设置字体 (折叠面板) -->
@@ -269,16 +291,52 @@
                                             </div>
                                         </div>
 
-                                        <div class="nytw-creative-row" id="nytw_stream_anim_cursor_row">
-                                            <div class="nytw-creative-label"><i class="fa-solid fa-terminal"></i> 输入光标</div>
-                                            <div class="nytw-cursor-toggle-wrapper">
-                                                <input id="nytw_stream_anim_cursor" type="checkbox" style="display:none" />
-                                                <label for="nytw_stream_anim_cursor" class="nytw-cursor-btn">
-                                                    <span class="cursor-icon">_</span>
-                                                    <span class="cursor-text">启用光标</span>
-                                                    <span class="cursor-status">OFF</span>
-                                                </label>
+                                        <div id="nytw_stream_anim_cursor_row" style="margin-top: 5px;">
+                                        <div class="nytw-creative-row">
+                                            <div class="nytw-creative-label" style="margin-bottom: 6px;">
+                                                <i class="fa-solid fa-terminal"></i> 输入光标
                                             </div>
+                                            <input id="nytw_stream_anim_cursor" type="checkbox" style="display:none" checked />
+                                            <div id="nytw_stream_anim_cursor_config" style="display: flex; flex-direction: column; gap: 8px;">
+                                                <div class="nytw-cursor-config-row">
+                                                    <div class="nytw-cursor-config-label">
+                                                        <i class="fa-solid fa-i-cursor"></i> 形状
+                                                    </div>
+                                                    <select id="nytw_stream_anim_cursor_shape" class="nytw-mini-select">
+                                                        <option value="bar">竖线</option>
+                                                        <option value="thin">细竖线</option>
+                                                        <option value="block">方块</option>
+                                                        <option value="hollow">空心方块</option>
+                                                        <option value="underscore">下划线</option>
+                                                        <option value="image">自定义图片</option>
+                                                    </select>
+                                                </div>
+                                                <div class="nytw-cursor-config-row">
+                                                    <div class="nytw-cursor-config-label">
+                                                        <i class="fa-solid fa-wave-square"></i> 动画
+                                                    </div>
+                                                    <select id="nytw_stream_anim_cursor_anim" class="nytw-mini-select">
+                                                        <option value="blink">闪烁</option>
+                                                        <option value="smooth">柔和</option>
+                                                        <option value="pulse">呼吸</option>
+                                                        <option value="elastic">弹性</option>
+                                                        <option value="glitch">故障</option>
+                                                        <option value="solid">常亮</option>
+                                                    </select>
+                                                </div>
+                                                <div class="nytw-cursor-config-row" id="nytw_stream_anim_cursor_image_row">
+                                                    <div class="nytw-cursor-config-label">
+                                                        <i class="fa-solid fa-link"></i> 图片
+                                                    </div>
+                                                    <input
+                                                        id="nytw_stream_anim_cursor_image_url"
+                                                        type="text"
+                                                        class="text_pole nytw-cursor-url-input"
+                                                        placeholder="https://example.com/cursor.gif"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
                                         </div>
 
                                         <div class="nytw-stream-anim-hint" id="nytw_stream_anim_hint"></div>

@@ -87,6 +87,10 @@ function renderImportedFontsList() {
         const actions = document.createElement('div');
         actions.className = 'nytw-font-actions';
 
+        const useGlobal = document.createElement('button');
+        useGlobal.className = 'menu_button nytw-font-use-global';
+        useGlobal.textContent = '设为全局';
+
         const useBody = document.createElement('button');
         useBody.className = 'menu_button nytw-font-use-body';
         useBody.textContent = '设为正文';
@@ -99,6 +103,7 @@ function renderImportedFontsList() {
         useCustom.className = 'menu_button nytw-font-use-custom';
         useCustom.textContent = '设为自定义';
 
+        actions.appendChild(useGlobal);
         actions.appendChild(useBody);
         actions.appendChild(useDialogue);
         actions.appendChild(useCustom);
@@ -271,11 +276,27 @@ export function initImportTab() {
         const font = settings.importedFonts.find(f => f.id === fontId);
         if (!font) return;
 
+        if (target.classList.contains('nytw-font-use-global')) {
+            const family = String(font.family || '').trim();
+            settings.globalFont = getFontFamilyDisplayLabel(family) || family;
+            const el = document.getElementById('nytw_global_font');
+            if (el instanceof HTMLInputElement) {
+                el.value = settings.globalFont;
+                el.style.fontFamily = toCssFontFamilyValue(el.value);
+            }
+            saveSettingsDebounced();
+            queueApplyFonts();
+            return;
+        }
+
         if (target.classList.contains('nytw-font-use-body')) {
             const family = String(font.family || '').trim();
             settings.bodyFont = getFontFamilyDisplayLabel(family) || family;
             const el = document.getElementById('nytw_body_font');
-            if (el instanceof HTMLInputElement) el.value = settings.bodyFont;
+            if (el instanceof HTMLInputElement) {
+                el.value = settings.bodyFont;
+                el.style.fontFamily = toCssFontFamilyValue(el.value);
+            }
             saveSettingsDebounced();
             queueApplyFonts();
             return;
@@ -285,7 +306,10 @@ export function initImportTab() {
             const family = String(font.family || '').trim();
             settings.dialogueFont = getFontFamilyDisplayLabel(family) || family;
             const el = document.getElementById('nytw_dialogue_font');
-            if (el instanceof HTMLInputElement) el.value = settings.dialogueFont;
+            if (el instanceof HTMLInputElement) {
+                el.value = settings.dialogueFont;
+                el.style.fontFamily = toCssFontFamilyValue(el.value);
+            }
             saveSettingsDebounced();
             queueApplyFonts();
             return;
@@ -295,7 +319,10 @@ export function initImportTab() {
             const family = String(font.family || '').trim();
             settings.customFont = getFontFamilyDisplayLabel(family) || family;
             const el = document.getElementById('nytw_custom_font');
-            if (el instanceof HTMLInputElement) el.value = settings.customFont;
+            if (el instanceof HTMLInputElement) {
+                el.value = settings.customFont;
+                el.style.fontFamily = toCssFontFamilyValue(el.value);
+            }
 
             // Let the settings-tab handler manage UI + scan via change event.
             const wrapToggle = document.getElementById('nytw_custom_font_wrap_enabled');
@@ -313,16 +340,31 @@ export function initImportTab() {
             settings.importedFonts = settings.importedFonts.filter(f => f.id !== fontId);
             const deletedFamily = String(font.family || '').trim();
             if (deletedFamily) {
+                if (toCssFontFamilyValue(settings.globalFont) === deletedFamily) settings.globalFont = '';
                 if (toCssFontFamilyValue(settings.bodyFont) === deletedFamily) settings.bodyFont = '';
                 if (toCssFontFamilyValue(settings.dialogueFont) === deletedFamily) settings.dialogueFont = '';
                 if (toCssFontFamilyValue(settings.customFont) === deletedFamily) settings.customFont = '';
 
+                const globalInput = document.getElementById('nytw_global_font');
+                if (globalInput instanceof HTMLInputElement) {
+                    globalInput.value = settings.globalFont;
+                    globalInput.style.fontFamily = toCssFontFamilyValue(globalInput.value);
+                }
                 const bodyInput = document.getElementById('nytw_body_font');
-                if (bodyInput instanceof HTMLInputElement) bodyInput.value = settings.bodyFont;
+                if (bodyInput instanceof HTMLInputElement) {
+                    bodyInput.value = settings.bodyFont;
+                    bodyInput.style.fontFamily = toCssFontFamilyValue(bodyInput.value);
+                }
                 const dialogueInput = document.getElementById('nytw_dialogue_font');
-                if (dialogueInput instanceof HTMLInputElement) dialogueInput.value = settings.dialogueFont;
+                if (dialogueInput instanceof HTMLInputElement) {
+                    dialogueInput.value = settings.dialogueFont;
+                    dialogueInput.style.fontFamily = toCssFontFamilyValue(dialogueInput.value);
+                }
                 const customInput = document.getElementById('nytw_custom_font');
-                if (customInput instanceof HTMLInputElement) customInput.value = settings.customFont;
+                if (customInput instanceof HTMLInputElement) {
+                    customInput.value = settings.customFont;
+                    customInput.style.fontFamily = toCssFontFamilyValue(customInput.value);
+                }
             }
 
             try {

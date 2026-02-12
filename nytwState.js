@@ -27,6 +27,7 @@ const PRESET_FONTS = [
 
 export const DEFAULT_SETTINGS = {
     fontsEnabled: true,
+    globalFont: '',
     bodyFont: '',
     dialogueFont: '',
     customFont: '',
@@ -49,6 +50,9 @@ export const DEFAULT_SETTINGS = {
     streamAnimEffect: 'none',
     streamAnimSpeed: 20,
     streamAnimCursor: true,
+    streamAnimCursorShape: 'bar',
+    streamAnimCursorAnim: 'blink',
+    streamAnimCursorImageUrl: '',
     presetsVersion: 0,
 };
 
@@ -64,6 +68,30 @@ export function normalizeStreamAnimEffect(value) {
     if (raw === 'blur') return 'blur';
     if (raw === 'glow') return 'glow';
     return 'none';
+}
+
+export function normalizeStreamCursorShape(value) {
+    const raw = String(value || '').trim().toLowerCase();
+    if (raw === 'block') return 'block';
+    if (raw === 'underscore') return 'underscore';
+    if (raw === 'hollow') return 'hollow';
+    if (raw === 'thin') return 'thin';
+    if (raw === 'image') return 'image';
+    return 'bar';
+}
+
+export function normalizeStreamCursorAnim(value) {
+    const raw = String(value || '').trim().toLowerCase();
+    if (raw === 'pulse') return 'pulse';
+    if (raw === 'solid') return 'solid';
+    if (raw === 'smooth') return 'smooth';
+    if (raw === 'elastic') return 'elastic';
+    if (raw === 'glitch') return 'glitch';
+    return 'blink';
+}
+
+export function normalizeStreamCursorImageUrl(value) {
+    return String(value ?? '').trim();
 }
 
 export function clampStreamAnimSpeed(value) {
@@ -113,6 +141,9 @@ function applyDefaultSettings() {
     settings.streamAnimEffect = normalizeStreamAnimEffect(settings.streamAnimEffect);
     settings.streamAnimSpeed = clampStreamAnimSpeed(settings.streamAnimSpeed);
     settings.streamAnimCursor = Boolean(settings.streamAnimCursor);
+    settings.streamAnimCursorShape = normalizeStreamCursorShape(settings.streamAnimCursorShape);
+    settings.streamAnimCursorAnim = normalizeStreamCursorAnim(settings.streamAnimCursorAnim);
+    settings.streamAnimCursorImageUrl = normalizeStreamCursorImageUrl(settings.streamAnimCursorImageUrl);
     settings.bodyFontSize = clampOptionalFontSize(settings.bodyFontSize);
     settings.bodyLetterSpacing = clampOptionalLetterSpacing(settings.bodyLetterSpacing);
     settings.dialogueFontSize = clampOptionalFontSize(settings.dialogueFontSize);
