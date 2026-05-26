@@ -1,6 +1,7 @@
 ﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { eventSource, event_types, streamingProcessor } from '../../../../script.js';
 import { applyCustomIndependentFont, CUSTOM_INDEPENDENT_FONT_CLASS, CUSTOM_INDEPENDENT_FONT_MARK_ATTR } from './customIndependentFont.js';
 import { morphdom } from '../../../../lib.js';
+import { isLikelyNytwMarkdownTableSource, isNytwProtectedContentElement, isWithinNytwProtectedContent } from './nytwProtectedContent.js';
 import {
     clampOptionalFontSize,
     clampOptionalLetterSpacing,
@@ -484,12 +485,14 @@ function applyQuoteWrapping(rootEl) {
     const walker = document.createTreeWalker(rootEl, NodeFilter.SHOW_TEXT, {
         acceptNode(node) {
             if (!node || !node.nodeValue) return NodeFilter.FILTER_REJECT;
+            if (isLikelyNytwMarkdownTableSource(node.nodeValue)) return NodeFilter.FILTER_REJECT;
             const text = node.nodeValue;
             if (!quotePairs.some(([open]) => text.includes(open))) return NodeFilter.FILTER_REJECT;
 
             const parent = node.parentElement;
             if (!parent) return NodeFilter.FILTER_REJECT;
-            if (parent.closest('style, script, textarea, pre, code, q')) return NodeFilter.FILTER_REJECT;
+            if (isWithinNytwProtectedContent(parent)) return NodeFilter.FILTER_REJECT;
+            if (parent.closest('q')) return NodeFilter.FILTER_REJECT;
             return NodeFilter.FILTER_ACCEPT;
         },
     });
@@ -586,6 +589,8 @@ function applyDialogueFontToQuotes(containerEl) {
     const qEls = Array.from(containerEl.querySelectorAll('q'));
     for (const q of qEls) {
         if (!(q instanceof HTMLElement)) continue;
+
+        if (isWithinNytwProtectedContent(q)) continue;
 
         if (q.closest('.ny-custom, .custom-ny-custom')) {
             q.classList.remove('ny-dialogue', 'custom-ny-dialogue');
@@ -817,9 +822,10 @@ function collectEligibleLocaleTextNodes(containerEl) {
     const walker = document.createTreeWalker(containerEl, NodeFilter.SHOW_TEXT, {
         acceptNode(node) {
             if (!node || !node.nodeValue) return NodeFilter.FILTER_REJECT;
+            if (isLikelyNytwMarkdownTableSource(node.nodeValue)) return NodeFilter.FILTER_REJECT;
             const parent = node.parentElement;
             if (!parent) return NodeFilter.FILTER_REJECT;
-            if (parent.closest('style, script, textarea, pre, code')) return NodeFilter.FILTER_REJECT;
+            if (isWithinNytwProtectedContent(parent)) return NodeFilter.FILTER_REJECT;
             if (parent.closest(`.${CUSTOM_INDEPENDENT_FONT_CLASS}, .custom-${CUSTOM_INDEPENDENT_FONT_CLASS}`)) return NodeFilter.FILTER_REJECT;
             if (parent.closest(`[${CUSTOM_INDEPENDENT_FONT_MARK_ATTR}]`)) return NodeFilter.FILTER_REJECT;
             if (parent.closest(`.${CHAR_CLASS.split(' ')[0]}`)) return NodeFilter.FILTER_REJECT;
@@ -874,6 +880,11 @@ function applyLocaleFontsToTypewriterChars(containerEl, activeKeys) {
 
     for (const el of chars) {
         if (!(el instanceof HTMLElement)) continue;
+
+        if (isWithinNytwProtectedContent(el)) {
+            el.removeAttribute(LOCALE_FONT_ATTR);
+            continue;
+        }
 
         // Custom independent font always wins.
         if (el.closest(`[${CUSTOM_INDEPENDENT_FONT_MARK_ATTR}]`)) {
@@ -973,16 +984,21 @@ function segmentTextForStreamingAnimation(rootEl, { granularity = 'word', baseIn
                 const parent = node.parentElement;
                 if (!parent) return NodeFilter.FILTER_REJECT;
                 if (parent.closest(`.${STREAM_SEG_CLASS}`)) return NodeFilter.FILTER_REJECT;
-                if (parent.closest('pre, code, textarea, script, style')) return NodeFilter.FILTER_REJECT;
+                if (isWithinNytwProtectedContent(parent)) return NodeFilter.FILTER_REJECT;
                 return NodeFilter.FILTER_ACCEPT;
             }
-            if (node.nodeType === Node.ELEMENT_NODE) return NodeFilter.FILTER_SKIP;
+            if (node.nodeType === Node.ELEMENT_NODE) {
+                const el = /** @type {Element} */ (node);
+                if (isNytwProtectedContentElement(el)) return NodeFilter.FILTER_REJECT;
+                return NodeFilter.FILTER_SKIP;
+            }
 
             if (!node || !node.nodeValue) return NodeFilter.FILTER_REJECT;
+            if (isLikelyNytwMarkdownTableSource(node.nodeValue)) return NodeFilter.FILTER_REJECT;
             const parent = node.parentElement;
             if (!parent) return NodeFilter.FILTER_REJECT;
             if (parent.closest(`.${STREAM_SEG_CLASS}`)) return NodeFilter.FILTER_REJECT;
-            if (parent.closest('pre, code, textarea, script, style')) return NodeFilter.FILTER_REJECT;
+            if (isWithinNytwProtectedContent(parent)) return NodeFilter.FILTER_REJECT;
             if (/^\\s*$/.test(node.nodeValue)) return NodeFilter.FILTER_REJECT;
             return NodeFilter.FILTER_ACCEPT;
         },
@@ -1058,6 +1074,10 @@ function typewriterizeNode(node, ctx) {
     if (!node) return document.createDocumentFragment();
 
     if (node.nodeType === Node.TEXT_NODE) {
+        if (isLikelyNytwMarkdownTableSource(node.textContent || '')) {
+            return document.createTextNode(node.textContent || '');
+        }
+
         const frag = document.createDocumentFragment();
         const segments = splitGraphemes(node.textContent || '');
         for (const segment of segments) {
@@ -1078,6 +1098,13 @@ function typewriterizeNode(node, ctx) {
 
     if (node.nodeType === Node.ELEMENT_NODE) {
         const el = /** @type {Element} */ (node);
+
+        // Markdown tables rely on browser table layout and stable rendered structure.
+        // Locale fonts and stream/typewriter character spans can destabilize table
+        // columns, so protected structured content is preserved as a whole subtree.
+        if (isNytwProtectedContentElement(el)) {
+            return el.cloneNode(true);
+        }
 
         if (el.tagName === 'BR') {
             return document.createElement('br');
@@ -1199,6 +1226,7 @@ function wrapBundleQuotesAndCustom(rootEl) {
     for (const q of qEls) {
         if (!(q instanceof HTMLElement)) continue;
         if (!q.parentElement) continue;
+        if (isWithinNytwProtectedContent(q)) continue;
         if (dialogueOuterClass && q.closest(`.${dialogueOuterClass}`)) continue;
         if (customOuterClass && q.closest(`.${customOuterClass}`)) continue;
 
@@ -1236,11 +1264,12 @@ function wrapBundleQuotesAndCustom(rootEl) {
         const walker = document.createTreeWalker(rootEl, NodeFilter.SHOW_TEXT, {
             acceptNode(node) {
                 if (!node || !node.nodeValue) return NodeFilter.FILTER_REJECT;
+                if (isLikelyNytwMarkdownTableSource(node.nodeValue)) return NodeFilter.FILTER_REJECT;
                 if (!node.nodeValue.includes(customOpen)) return NodeFilter.FILTER_REJECT;
                 const parent = node.parentElement;
                 if (!parent) return NodeFilter.FILTER_REJECT;
                 if (parent.closest(`.${customOuterClass}`)) return NodeFilter.FILTER_REJECT;
-                if (parent.closest('style, script, textarea, pre, code')) return NodeFilter.FILTER_REJECT;
+                if (isWithinNytwProtectedContent(parent)) return NodeFilter.FILTER_REJECT;
                 return NodeFilter.FILTER_ACCEPT;
             },
         });

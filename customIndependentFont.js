@@ -1,3 +1,5 @@
+import { isLikelyNytwMarkdownTableSource, isWithinNytwProtectedContent } from './nytwProtectedContent.js';
+
 export const CUSTOM_INDEPENDENT_FONT_CLASS = 'ny-custom-font';
 
 export const CUSTOM_INDEPENDENT_FONT_MARK_ATTR = 'data-nytw-custom-font';
@@ -91,9 +93,10 @@ function collectEligibleTextNodes(rootEl) {
     const walker = document.createTreeWalker(rootEl, NodeFilter.SHOW_TEXT, {
         acceptNode(node) {
             if (!node || !node.nodeValue) return NodeFilter.FILTER_REJECT;
+            if (isLikelyNytwMarkdownTableSource(node.nodeValue)) return NodeFilter.FILTER_REJECT;
             const parent = node.parentElement;
             if (!parent) return NodeFilter.FILTER_REJECT;
-            if (parent.closest('style, script, textarea, pre, code')) return NodeFilter.FILTER_REJECT;
+            if (isWithinNytwProtectedContent(parent)) return NodeFilter.FILTER_REJECT;
             return NodeFilter.FILTER_ACCEPT;
         },
     });
