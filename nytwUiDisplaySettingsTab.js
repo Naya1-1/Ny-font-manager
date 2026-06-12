@@ -10,6 +10,7 @@ import {
     clampStreamAnimSpeed,
     clampTextAnimIntensity,
     clampTextAnimPeriod,
+    clampTextAnimRecentFloors,
     normalizeOptionalCssColor,
     normalizeOptionalFontStyle,
     normalizeOptionalFontWeight,
@@ -393,6 +394,8 @@ export function initDisplaySettingsTab() {
     const textAnimEnabledEl = document.getElementById('nytw_text_anim_enabled');
     const textAnimConfigEl = document.getElementById('nytw_text_anim_config');
     const textAnimPreviewEl = document.getElementById('nytw_text_anim_preview');
+    const textAnimRecentFloorsEl = document.getElementById('nytw_text_anim_recent_floors');
+    const textAnimRecentFloorsValueEl = document.getElementById('nytw_text_anim_recent_floors_value');
     const textAnimBodyPreviewEl = document.getElementById('nytw_text_anim_body_preview');
     const textAnimDialoguePreviewEl = document.getElementById('nytw_text_anim_dialogue_preview');
     const textAnimControls = {
@@ -1103,6 +1106,14 @@ export function initDisplaySettingsTab() {
         if (textAnimBodyEl) textAnimBodyEl.classList.toggle('is-disabled', !enabled);
         if (textAnimConfigEl instanceof HTMLElement) textAnimConfigEl.classList.toggle('is-disabled', !enabled);
 
+        const recentFloors = clampTextAnimRecentFloors(settings.textAnimRecentFloors);
+        settings.textAnimRecentFloors = recentFloors;
+        if (textAnimRecentFloorsEl instanceof HTMLInputElement) {
+            textAnimRecentFloorsEl.value = String(recentFloors);
+            textAnimRecentFloorsEl.disabled = !enabled;
+        }
+        if (textAnimRecentFloorsValueEl) textAnimRecentFloorsValueEl.textContent = `${recentFloors}层`;
+
         for (const [target, config] of Object.entries(textAnimControls)) {
             if (config.overrideKey) {
                 settings[config.overrideKey] = settings[config.overrideKey] === true;
@@ -1448,6 +1459,17 @@ export function initDisplaySettingsTab() {
     if (textAnimEnabledEl instanceof HTMLInputElement) {
         textAnimEnabledEl.addEventListener('change', () => {
             settings.textAnimEnabled = textAnimEnabledEl.checked;
+            applyTextAnimSettings();
+        });
+    }
+
+    if (textAnimRecentFloorsEl instanceof HTMLInputElement) {
+        textAnimRecentFloorsEl.addEventListener('input', () => {
+            settings.textAnimRecentFloors = clampTextAnimRecentFloors(textAnimRecentFloorsEl.value);
+            applyTextAnimSettings({ debounced: true });
+        });
+        textAnimRecentFloorsEl.addEventListener('change', () => {
+            settings.textAnimRecentFloors = clampTextAnimRecentFloors(textAnimRecentFloorsEl.value);
             applyTextAnimSettings();
         });
     }

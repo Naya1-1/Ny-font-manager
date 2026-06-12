@@ -381,6 +381,21 @@
                                         <q id="nytw_text_anim_dialogue_preview" class="ny-dialogue">这是一句对话，用来预览对话长期动画。</q>
                                     </div>
 
+                                    <div class="nytw-text-anim-target-panel">
+                                        <div class="nytw-text-anim-target-heading">
+                                            <div class="nytw-card-section-title"><i class="fa-solid fa-layer-group"></i><span>渲染范围</span></div>
+                                        </div>
+                                        <div class="nytw-creative-row">
+                                            <div class="nytw-creative-label"><i class="fa-solid fa-layer-group"></i> 渲染最近楼层数</div>
+                                            <div class="nytw-range-wrapper">
+                                                <i class="fa-solid fa-minus slow-icon"></i>
+                                                <input id="nytw_text_anim_recent_floors" type="range" min="1" max="10" step="1" class="nytw-creative-range" />
+                                                <i class="fa-solid fa-plus fast-icon"></i>
+                                            </div>
+                                            <div class="nytw-speed-display" id="nytw_text_anim_recent_floors_value"></div>
+                                        </div>
+                                    </div>
+
                                     <div class="nytw-text-anim-target-panel nytw-text-anim-target-panel--global" data-text-anim-target="global">
                                         <div class="nytw-text-anim-target-heading">
                                             <div class="nytw-card-section-title"><i class="fa-solid fa-globe"></i><span>全局动画</span></div>

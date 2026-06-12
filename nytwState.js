@@ -76,6 +76,7 @@ export const DEFAULT_SETTINGS = {
     streamAnimCursorAnim: 'blink',
     streamAnimCursorImageUrl: '',
     textAnimEnabled: false,
+    textAnimRecentFloors: 3,
     textAnimGlobalEffect: 'breath',
     textAnimGlobalColor: '',
     textAnimGlobalIntensity: 35,
@@ -162,6 +163,12 @@ export function clampTextAnimPeriod(value) {
     if (!Number.isFinite(num)) return 8;
     const clamped = Math.min(30, Math.max(3, num));
     return Math.round(clamped * 2) / 2;
+}
+
+export function clampTextAnimRecentFloors(value) {
+    const num = Number(value);
+    if (!Number.isFinite(num)) return 3;
+    return Math.min(10, Math.max(1, Math.round(num)));
 }
 
 export function normalizeTextAnimColor(value) {
@@ -263,6 +270,7 @@ function applyDefaultSettings() {
     settings.streamAnimCursorAnim = normalizeStreamCursorAnim(settings.streamAnimCursorAnim);
     settings.streamAnimCursorImageUrl = normalizeStreamCursorImageUrl(settings.streamAnimCursorImageUrl);
     settings.textAnimEnabled = settings.textAnimEnabled === true;
+    settings.textAnimRecentFloors = clampTextAnimRecentFloors(settings.textAnimRecentFloors);
     if (!hadTextAnimGlobalEffect && hadLegacyTextAnimEffect) {
         settings.textAnimGlobalEffect = normalizeTextAnimEffect(settings.textAnimEffect);
         settings.textAnimGlobalColor = normalizeTextAnimColor(settings.textAnimColor);

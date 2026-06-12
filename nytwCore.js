@@ -16,6 +16,7 @@ import {
     clampStreamAnimSpeed,
     clampTextAnimIntensity,
     clampTextAnimPeriod,
+    clampTextAnimRecentFloors,
     getStreamRenderMode,
     normalizeOptionalCssColor,
     normalizeOptionalFontStyle,
@@ -84,7 +85,6 @@ const TEXT_ANIM_SHIFT_SOFT_VAR = '--nytw-text-anim-shift-soft';
 const TEXT_ANIM_SHIFT_SOFT_NEG_VAR = '--nytw-text-anim-shift-soft-neg';
 const TEXT_ANIM_DIM_VAR = '--nytw-text-anim-dim';
 const TEXT_ANIM_VEIL_VAR = '--nytw-text-anim-veil';
-const TEXT_ANIM_MAX_ACTIVE = 12;
 const TEXT_ANIM_DIALOGUE_SELECTOR = '.Ny-font-manager, .custom-Ny-font-manager, .ny-dialogue, .custom-ny-dialogue, q';
 const TEXT_ANIM_BODY_BLOCK_SELECTOR = ':scope > p, :scope > div, :scope > span, :scope > blockquote, :scope > ul, :scope > ol';
 const TEXT_ANIM_SKIP_SELECTOR = NYTW_PROTECTED_CONTENT_SELECTOR;
@@ -1706,6 +1706,18 @@ function collectBodyTextAnimationTargets(messageTextEl) {
         : (String(messageTextEl.textContent || '').trim() ? [messageTextEl] : []);
 }
 
+function collectMessageTextElsForTextAnimation(messageEl) {
+    if (!messageEl || !(messageEl instanceof HTMLElement)) return [];
+    return Array.from(messageEl.querySelectorAll(`.mes_text:not(.${STREAM_BUFFER_CLASS})`))
+        .filter((el) => el instanceof HTMLElement && Boolean(String(el.textContent || '').trim()));
+}
+
+function getMessageFloorNumber(messageEl) {
+    const raw = messageEl?.getAttribute?.('mesid');
+    const num = Number(raw);
+    return Number.isFinite(num) ? num : null;
+}
+
 function syncTextAnimationTargets() {
     const bodyConfig = getResolvedTextAnimationConfig('body');
     const dialogueConfig = getResolvedTextAnimationConfig('dialogue');
@@ -1723,15 +1735,31 @@ function syncTextAnimationTargets() {
     }
 
     const activeId = getActiveStreamingMessageId();
-    const candidates = Array.from(document.querySelectorAll(`#chat .mes:not(.${STREAMING_MESSAGE_CLASS}) .mes_text:not(.${STREAM_BUFFER_CLASS})`))
-        .filter((el) => {
-            if (!(el instanceof HTMLElement)) return false;
-            const messageEl = el.closest?.('.mes');
-            if (activeId && messageEl?.getAttribute?.('mesid') === activeId) return false;
-            return Boolean(String(el.textContent || '').trim());
+    const candidateMessages = Array.from(document.querySelectorAll(`#chat .mes:not(.${STREAMING_MESSAGE_CLASS})`))
+        .map((messageEl, domIndex) => ({
+            messageEl,
+            domIndex,
+            floorNumber: getMessageFloorNumber(messageEl),
+        }))
+        .filter(({ messageEl }) => {
+            if (!(messageEl instanceof HTMLElement)) return false;
+            if (activeId && messageEl.getAttribute('mesid') === activeId) return false;
+            return collectMessageTextElsForTextAnimation(messageEl).length > 0;
+        })
+        .sort((a, b) => {
+            if (a.floorNumber !== null && b.floorNumber !== null && a.floorNumber !== b.floorNumber) {
+                return a.floorNumber - b.floorNumber;
+            }
+            if (a.floorNumber !== null && b.floorNumber === null) return -1;
+            if (a.floorNumber === null && b.floorNumber !== null) return 1;
+            return a.domIndex - b.domIndex;
         });
 
-    const activeMessageTextEls = candidates.slice(-TEXT_ANIM_MAX_ACTIVE);
+    const recentFloorCount = clampTextAnimRecentFloors(settings.textAnimRecentFloors);
+    settings.textAnimRecentFloors = recentFloorCount;
+    const activeMessageTextEls = candidateMessages
+        .slice(-recentFloorCount)
+        .flatMap(({ messageEl }) => collectMessageTextElsForTextAnimation(messageEl));
     const activeTargets = new Set();
     for (const messageTextEl of activeMessageTextEls) {
         const dialogueTargets = isTextAnimationConfigActive(dialogueConfig)
@@ -2282,6 +2310,7 @@ function flushScan() {
         const containers = Array.from(pendingContainers);
         pendingContainers.clear();
         containers.forEach(processContainer);
+        if (!getActiveStreamingMessageId()) syncTextAnimationTargets();
     } finally {
         queueMicrotask(() => {
             suppressMutations = false;
