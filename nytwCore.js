@@ -86,7 +86,7 @@ const TEXT_ANIM_SHIFT_SOFT_NEG_VAR = '--nytw-text-anim-shift-soft-neg';
 const TEXT_ANIM_DIM_VAR = '--nytw-text-anim-dim';
 const TEXT_ANIM_VEIL_VAR = '--nytw-text-anim-veil';
 const TEXT_ANIM_DIALOGUE_SELECTOR = '.Ny-font-manager, .custom-Ny-font-manager, .ny-dialogue, .custom-ny-dialogue, q';
-const TEXT_ANIM_BODY_BLOCK_SELECTOR = ':scope > p, :scope > div, :scope > span, :scope > blockquote, :scope > ul, :scope > ol';
+const TEXT_ANIM_BODY_BLOCK_SELECTOR = 'p, li, blockquote, h1, h2, h3, h4, h5, h6';
 const TEXT_ANIM_SKIP_SELECTOR = NYTW_PROTECTED_CONTENT_SELECTOR;
 
 const LOCALE_FONT_ATTR = 'data-nytw-locale-font';
@@ -1632,6 +1632,18 @@ function isInsideAnyElement(node, elements) {
     return elements.some((el) => el instanceof HTMLElement && el.contains(node));
 }
 
+function hasNestedTextAnimationBodyBlock(el) {
+    if (!el || !(el instanceof HTMLElement)) return false;
+    return Array.from(el.querySelectorAll(TEXT_ANIM_BODY_BLOCK_SELECTOR))
+        .some((child) => (
+            child instanceof HTMLElement
+            && child !== el
+            && !child.closest(TEXT_ANIM_DIALOGUE_SELECTOR)
+            && !child.closest(TEXT_ANIM_SKIP_SELECTOR)
+            && Boolean(String(child.textContent || '').trim())
+        ));
+}
+
 function isEligibleTextAnimationBodyWrapper(el, blockTargets) {
     if (!el || !(el instanceof HTMLElement)) return false;
     if (!el.hasAttribute(TEXT_ANIM_BODY_WRAP_ATTR)) return false;
@@ -1694,6 +1706,7 @@ function collectBodyTextAnimationTargets(messageTextEl) {
             if (el.matches(TEXT_ANIM_DIALOGUE_SELECTOR)) return false;
             if (el.closest(TEXT_ANIM_DIALOGUE_SELECTOR)) return false;
             if (el.matches(TEXT_ANIM_SKIP_SELECTOR)) return false;
+            if (hasNestedTextAnimationBodyBlock(el)) return false;
             if (el.querySelector(TEXT_ANIM_DIALOGUE_SELECTOR)) return false;
             return Boolean(String(el.textContent || '').trim());
         });

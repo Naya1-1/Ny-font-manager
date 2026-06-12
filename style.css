@@ -2144,6 +2144,13 @@
     animation-name: nytw-text-anim-edge-glow;
 }
 
+#chat [data-nytw-text-anim="breath"] *,
+#chat [data-nytw-text-anim="edge-glow"] *,
+.nytw-text-anim-preview [data-nytw-text-anim="breath"] *,
+.nytw-text-anim-preview [data-nytw-text-anim="edge-glow"] * {
+    text-shadow: inherit;
+}
+
 #chat [data-nytw-text-anim="sweep"],
 .nytw-text-anim-preview [data-nytw-text-anim="sweep"] {
     animation-name: nytw-text-anim-sweep;
@@ -2204,13 +2211,25 @@
 }
 
 @keyframes nytw-text-anim-breath {
-    0%, 100% { opacity: 1; text-shadow: 0 0 0 transparent; }
-    50% { opacity: var(--nytw-text-anim-dim); text-shadow: 0 0 var(--nytw-text-anim-shadow) var(--nytw-text-anim-color); }
+    0%, 100% {
+        opacity: 1;
+        filter: brightness(1) drop-shadow(0 0 0 transparent);
+        text-shadow: 0 0 0 transparent;
+    }
+    50% {
+        opacity: var(--nytw-text-anim-dim);
+        filter: brightness(1.04) drop-shadow(0 0 var(--nytw-text-anim-shadow-soft) var(--nytw-text-anim-color));
+        text-shadow: 0 0 var(--nytw-text-anim-shadow) var(--nytw-text-anim-color);
+    }
 }
 
 @keyframes nytw-text-anim-edge-glow {
-    0%, 100% { text-shadow: 0 0 0 transparent; }
+    0%, 100% {
+        filter: brightness(1) drop-shadow(0 0 0 transparent);
+        text-shadow: 0 0 0 transparent;
+    }
     42%, 58% {
+        filter: brightness(1.06) drop-shadow(0 0 var(--nytw-text-anim-shadow-soft) var(--nytw-text-anim-color));
         text-shadow:
             0 0 var(--nytw-text-anim-shadow-soft) currentColor,
             0 0 var(--nytw-text-anim-shadow) var(--nytw-text-anim-color);
