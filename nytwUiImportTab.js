@@ -7,6 +7,7 @@ import {
     deleteFontBlob,
     extractFontFamiliesFromCssText,
     formatBytes,
+    getFontBlob,
     getFontFamilyDisplayLabel,
     getImportedFontKind,
     inferFamiliesFromGoogleFontsCssUrl,
@@ -18,6 +19,264 @@ import {
     toCssFontFamilyValue,
     uniqueFontFamily,
 } from './nytwFonts.js';
+
+const FONT_CONFIG_SCHEMA = 'Ny-font-manager.font-config';
+const FONT_CONFIG_VERSION = 1;
+
+function cloneJsonValue(value) {
+    return JSON.parse(JSON.stringify(value ?? null));
+}
+
+function readFileAsText(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ''));
+        reader.onerror = () => reject(reader.error || new Error('文件读取失败'));
+        reader.readAsText(file);
+    });
+}
+
+function blobToDataUrl(blob) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ''));
+        reader.onerror = () => reject(reader.error || new Error('字体文件读取失败'));
+        reader.readAsDataURL(blob);
+    });
+}
+
+function dataUrlToBlob(dataUrl, fallbackType = '') {
+    const text = String(dataUrl || '');
+    const commaIndex = text.indexOf(',');
+    if (!text.startsWith('data:') || commaIndex < 0) {
+        throw new Error('字体文件数据格式无效');
+    }
+
+    const header = text.slice(0, commaIndex);
+    const payload = text.slice(commaIndex + 1);
+    const mimeMatch = header.match(/^data:([^;,]*)/i);
+    const mimeType = mimeMatch?.[1] || fallbackType || '';
+    const isBase64 = /;base64/i.test(header);
+
+    const binary = isBase64 ? atob(payload) : decodeURIComponent(payload);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+    }
+    return new Blob([bytes], { type: mimeType });
+}
+
+function downloadJsonFile(fileName, payload) {
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = fileName;
+    anchor.style.display = 'none';
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function buildExportFileName() {
+    const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+    return `Ny-font-manager-font-config-${stamp}.json`;
+}
+
+function parseFontConfigPayload(text) {
+    let payload;
+    try {
+        payload = JSON.parse(text);
+    } catch {
+        throw new Error('配置文件不是有效的 JSON。');
+    }
+
+    if (!payload || typeof payload !== 'object') {
+        throw new Error('配置文件格式无效。');
+    }
+
+    const importedFonts = Array.isArray(payload.importedFonts)
+        ? payload.importedFonts
+        : (Array.isArray(payload.fonts) ? payload.fonts : null);
+    if (!importedFonts) {
+        throw new Error('配置文件中没有找到已导入字体列表。');
+    }
+
+    let fontFiles = [];
+    if (Array.isArray(payload.fontFiles)) {
+        fontFiles = payload.fontFiles;
+    } else if (payload.fontBlobs && typeof payload.fontBlobs === 'object') {
+        fontFiles = Object.entries(payload.fontBlobs).map(([id, entry]) => ({ id, ...(entry || {}) }));
+    }
+
+    return { importedFonts, fontFiles };
+}
+
+function normalizeImportedFontRecord(rawFont) {
+    if (!rawFont || typeof rawFont !== 'object') return null;
+
+    const id = String(rawFont.id || createFontId()).trim() || createFontId();
+    const family = normalizeFontFamily(rawFont.family || rawFont.name || '');
+    if (!family) return null;
+
+    if (getImportedFontKind(rawFont) === 'css') {
+        const cssUrl = normalizeExternalStylesheetUrl(rawFont.cssUrl || rawFont.url || '');
+        if (!cssUrl) return null;
+        return {
+            id,
+            kind: 'css',
+            family,
+            cssUrl,
+        };
+    }
+
+    const fileName = String(rawFont.fileName || rawFont.name || `${family}.font`).trim().slice(0, 240);
+    const size = Number(rawFont.size);
+    return {
+        id,
+        kind: 'file',
+        name: family,
+        family,
+        fileName,
+        size: Number.isFinite(size) && size > 0 ? size : 0,
+        format: String(rawFont.format || inferFontFormatFromFileName(fileName) || '').trim().slice(0, 40),
+    };
+}
+
+function getFamilyMergeKey(font) {
+    return `${getImportedFontKind(font)}:${normalizeFontFamily(font?.family).toLowerCase()}`;
+}
+
+function mergeImportedFontRecords(importedFonts) {
+    const next = Array.isArray(settings.importedFonts) ? [...settings.importedFonts] : [];
+    let added = 0;
+    let updated = 0;
+
+    for (const font of importedFonts) {
+        const id = String(font?.id || '').trim();
+        const familyKey = getFamilyMergeKey(font);
+        let index = id ? next.findIndex((item) => String(item?.id || '') === id) : -1;
+        if (index < 0 && familyKey !== `${getImportedFontKind(font)}:`) {
+            index = next.findIndex((item) => getFamilyMergeKey(item) === familyKey);
+        }
+
+        if (index >= 0) {
+            next[index] = { ...next[index], ...font };
+            updated++;
+        } else {
+            next.push(font);
+            added++;
+        }
+    }
+
+    settings.importedFonts = next;
+    return { added, updated };
+}
+
+async function exportFontConfig() {
+    const importedFonts = Array.isArray(settings.importedFonts) ? settings.importedFonts : [];
+    const fontFiles = [];
+    const missingFileFonts = [];
+
+    for (const font of importedFonts) {
+        if (getImportedFontKind(font) !== 'file' || !font?.id) continue;
+        const blob = await getFontBlob(font.id);
+        if (!blob) {
+            missingFileFonts.push(font.family || font.fileName || font.id);
+            continue;
+        }
+
+        fontFiles.push({
+            id: font.id,
+            fileName: font.fileName || blob.name || '',
+            type: blob.type || '',
+            size: blob.size || font.size || 0,
+            dataUrl: await blobToDataUrl(blob),
+        });
+    }
+
+    downloadJsonFile(buildExportFileName(), {
+        schema: FONT_CONFIG_SCHEMA,
+        version: FONT_CONFIG_VERSION,
+        exportedAt: new Date().toISOString(),
+        importedFonts: cloneJsonValue(importedFonts),
+        fontFiles,
+    });
+
+    const fileCount = fontFiles.length;
+    const cssCount = importedFonts.filter((font) => getImportedFontKind(font) === 'css').length;
+    if (missingFileFonts.length) {
+        notify('warning', `已导出字体配置，但有 ${missingFileFonts.length} 个本地字体文件未找到，需重新导入。`);
+    } else {
+        notify('success', `已导出字体配置（${cssCount} 个 Web 字体，${fileCount} 个本地字体）。`);
+    }
+}
+
+async function importFontConfigFromFile(file) {
+    const text = await readFileAsText(file);
+    const payload = parseFontConfigPayload(text);
+    const fileMap = new Map(
+        payload.fontFiles
+            .filter((entry) => entry && typeof entry === 'object')
+            .map((entry) => [String(entry.id || '').trim(), entry]),
+    );
+
+    const imported = [];
+    let skipped = 0;
+    let restoredFiles = 0;
+
+    for (const rawFont of payload.importedFonts) {
+        const font = normalizeImportedFontRecord(rawFont);
+        if (!font) {
+            skipped++;
+            continue;
+        }
+
+        if (getImportedFontKind(font) === 'file') {
+            const fileEntry = fileMap.get(font.id);
+            if (fileEntry?.dataUrl) {
+                try {
+                    const blob = dataUrlToBlob(fileEntry.dataUrl, fileEntry.type || '');
+                    await putFontBlob(font.id, blob);
+                    if (!font.size && blob.size) font.size = blob.size;
+                    restoredFiles++;
+                } catch (error) {
+                    console.warn('[NyTW] Failed to restore font blob', font.fileName || font.id, error);
+                    skipped++;
+                    continue;
+                }
+            } else {
+                let existingBlob = null;
+                try {
+                    existingBlob = await getFontBlob(font.id);
+                } catch { /* no-op */ }
+
+                if (!existingBlob) {
+                    skipped++;
+                    continue;
+                }
+            }
+        }
+
+        imported.push(font);
+    }
+
+    if (!imported.length) {
+        throw new Error('没有可导入的字体配置。');
+    }
+
+    const result = mergeImportedFontRecords(imported);
+    saveSettingsDebounced();
+    renderImportedFontsList();
+    setImportedFontsPanelOpen(true);
+    queueApplyFonts();
+
+    const details = [`新增 ${result.added} 个`, `更新 ${result.updated} 个`];
+    if (restoredFiles) details.push(`恢复 ${restoredFiles} 个本地文件`);
+    if (skipped) details.push(`跳过 ${skipped} 个无效/缺少文件项`);
+    notify(skipped ? 'warning' : 'success', `字体配置导入完成：${details.join('，')}。`);
+}
 
 function setImportedFontsPanelOpen(open) {
     const importedFontsToggle = document.getElementById('nytw_imported_fonts_toggle');
@@ -124,10 +383,6 @@ export function initImportTab() {
             setImportedFontsPanelOpen(!isOpen);
         });
 
-        // Default to open if there are fonts
-        if (settings.importedFonts && settings.importedFonts.length > 0) {
-            setImportedFontsPanelOpen(true);
-        }
     }
 
     const fileBtn = document.getElementById('nytw_font_file_btn');
@@ -135,6 +390,9 @@ export function initImportTab() {
     const fileDisplay = document.getElementById('nytw_font_file_display');
     const cssUrlInput = document.getElementById('nytw_font_css_url');
     const importBtn = document.getElementById('nytw_import_font');
+    const exportConfigBtn = document.getElementById('nytw_export_font_config');
+    const importConfigBtn = document.getElementById('nytw_import_font_config');
+    const configFileInput = document.getElementById('nytw_font_config_file');
 
     const updateImportBtnState = () => {
         const hasFile = fileInput?.files?.length > 0;
@@ -147,6 +405,41 @@ export function initImportTab() {
     };
 
     cssUrlInput?.addEventListener('input', updateImportBtnState);
+
+    exportConfigBtn?.addEventListener('click', async () => {
+        if (exportConfigBtn instanceof HTMLButtonElement) exportConfigBtn.disabled = true;
+        try {
+            await exportFontConfig();
+        } catch (error) {
+            console.error('[NyTW] Failed to export font config', error);
+            notify('error', `字体配置导出失败：${error?.message || error}`);
+        } finally {
+            if (exportConfigBtn instanceof HTMLButtonElement) exportConfigBtn.disabled = false;
+        }
+    });
+
+    importConfigBtn?.addEventListener('click', () => {
+        if (configFileInput instanceof HTMLInputElement) {
+            configFileInput.value = '';
+            configFileInput.click();
+        }
+    });
+
+    configFileInput?.addEventListener('change', async () => {
+        const file = configFileInput instanceof HTMLInputElement ? configFileInput.files?.[0] : null;
+        if (!file) return;
+
+        if (importConfigBtn instanceof HTMLButtonElement) importConfigBtn.disabled = true;
+        try {
+            await importFontConfigFromFile(file);
+        } catch (error) {
+            console.error('[NyTW] Failed to import font config', error);
+            notify('error', `字体配置导入失败：${error?.message || error}`);
+        } finally {
+            if (configFileInput instanceof HTMLInputElement) configFileInput.value = '';
+            if (importConfigBtn instanceof HTMLButtonElement) importConfigBtn.disabled = false;
+        }
+    });
 
     fileBtn?.addEventListener('click', () => {
         fileInput?.click();

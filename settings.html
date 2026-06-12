@@ -213,7 +213,7 @@
                 <!-- Tab 2: 显示设置 -->
                 <div id="nytw_tab_display" class="nytw-tab-pane">
 
-                    <div class="nytw-display-setting-card" id="nytw_card_stream">
+                    <div class="nytw-display-setting-card is-collapsed" id="nytw_card_stream">
                         <div class="nytw-card-header nytw-card-toggle">
                             <div class="nytw-card-icon">
                                 <i class="fa-solid fa-wand-magic-sparkles"></i>
@@ -345,7 +345,185 @@
                             </div>
                         </div>
                     </div>
-                </div>
+                    </div>
+
+                    <!-- 独立卡片：长期文字动画 -->
+                    <div class="nytw-display-setting-card is-collapsed" id="nytw_text_anim_card">
+                        <div class="nytw-card-header nytw-card-toggle">
+                            <div class="nytw-card-icon">
+                                <i class="fa-solid fa-wand-sparkles"></i>
+                            </div>
+                            <div class="nytw-card-info">
+                                <div class="nytw-card-title">文字动画</div>
+                                <div class="nytw-card-desc">长期显示的低能耗文字氛围</div>
+                            </div>
+                            <div class="nytw-card-chevron">
+                                <i class="fa-solid fa-chevron-down"></i>
+                            </div>
+                        </div>
+
+                        <div class="nytw-card-content">
+                            <div class="nytw-card-body-padding">
+                                <div class="nytw-text-anim-body is-disabled" id="nytw_text_anim_body">
+                                    <div class="nytw-text-anim-target-panel nytw-text-anim-master-panel">
+                                        <div class="nytw-text-anim-target-heading">
+                                            <div class="nytw-card-section-title"><i class="fa-solid fa-power-off"></i><span>启用文字动画</span></div>
+                                            <label class="nytw-switch nytw-text-anim-master-switch" title="启用文字动画">
+                                                <input id="nytw_text_anim_enabled" type="checkbox" aria-label="启用文字动画" />
+                                                <span class="nytw-switch-slider"></span>
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <div class="nytw-text-anim-config is-disabled" id="nytw_text_anim_config">
+                                    <div class="nytw-text-anim-preview" id="nytw_text_anim_preview">
+                                        <p id="nytw_text_anim_body_preview">这是一段正文，用来预览正文长期动画。</p>
+                                        <q id="nytw_text_anim_dialogue_preview" class="ny-dialogue">这是一句对话，用来预览对话长期动画。</q>
+                                    </div>
+
+                                    <div class="nytw-text-anim-target-panel nytw-text-anim-target-panel--global" data-text-anim-target="global">
+                                        <div class="nytw-text-anim-target-heading">
+                                            <div class="nytw-card-section-title"><i class="fa-solid fa-globe"></i><span>全局动画</span></div>
+                                        </div>
+                                        <div class="nytw-mini-row">
+                                            <div class="nytw-mini-label"><i class="fa-solid fa-wand-sparkles"></i> 效果</div>
+                                            <select id="nytw_text_anim_global_effect" class="nytw-mini-select">
+                                                <option value="none">无</option>
+                                                <option value="breath">呼吸微光</option>
+                                                <option value="edge-glow">边缘辉光</option>
+                                                <option value="sweep">流光扫过</option>
+                                                <option value="ink">墨迹浮动</option>
+                                                <option value="candle">烛火摇曳</option>
+                                                <option value="paper">纸张显影</option>
+                                                <option value="frost">寒霜脉冲</option>
+                                                <option value="glitch">低频故障</option>
+                                            </select>
+                                        </div>
+                                        <div class="nytw-style-grid nytw-style-grid--color nytw-text-anim-color-row">
+                                            <div class="nytw-typo-type"><i class="fa-solid fa-palette"></i> 颜色</div>
+                                            <input id="nytw_text_anim_global_color_picker" class="nytw-color-picker" type="color" value="#8ab4ff" />
+                                            <input id="nytw_text_anim_global_color" class="text_pole nytw-reader-text-input" type="text" placeholder="跟随文字 / #8ab4ff" />
+                                        </div>
+                                        <div class="nytw-creative-row">
+                                            <div class="nytw-creative-label"><i class="fa-solid fa-signal"></i> 强度</div>
+                                            <div class="nytw-range-wrapper">
+                                                <i class="fa-solid fa-minus slow-icon"></i>
+                                                <input id="nytw_text_anim_global_intensity" type="range" min="0" max="80" step="5" class="nytw-creative-range" />
+                                                <i class="fa-solid fa-plus fast-icon"></i>
+                                            </div>
+                                            <div class="nytw-speed-display" id="nytw_text_anim_global_intensity_value"></div>
+                                        </div>
+                                        <div class="nytw-creative-row">
+                                            <div class="nytw-creative-label"><i class="fa-solid fa-clock"></i> 周期</div>
+                                            <div class="nytw-range-wrapper">
+                                                <i class="fa-solid fa-person-running fast-icon"></i>
+                                                <input id="nytw_text_anim_global_period" type="range" min="3" max="30" step="0.5" class="nytw-creative-range" />
+                                                <i class="fa-solid fa-tortoise slow-icon"></i>
+                                            </div>
+                                            <div class="nytw-speed-display" id="nytw_text_anim_global_period_value"></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="nytw-text-anim-target-panel" data-text-anim-target="body">
+                                        <div class="nytw-text-anim-target-heading">
+                                            <div class="nytw-card-section-title"><i class="fa-solid fa-align-left"></i><span>正文动画</span></div>
+                                            <label class="nytw-switch nytw-text-anim-override">
+                                                <input id="nytw_text_anim_body_override" type="checkbox" />
+                                                <span class="nytw-switch-slider"></span>
+                                                <span>单独设置</span>
+                                            </label>
+                                        </div>
+                                        <div class="nytw-mini-row">
+                                            <div class="nytw-mini-label"><i class="fa-solid fa-wand-sparkles"></i> 效果</div>
+                                            <select id="nytw_text_anim_body_effect" class="nytw-mini-select">
+                                                <option value="none">无</option>
+                                                <option value="breath">呼吸微光</option>
+                                                <option value="edge-glow">边缘辉光</option>
+                                                <option value="sweep">流光扫过</option>
+                                                <option value="ink">墨迹浮动</option>
+                                                <option value="candle">烛火摇曳</option>
+                                                <option value="paper">纸张显影</option>
+                                                <option value="frost">寒霜脉冲</option>
+                                                <option value="glitch">低频故障</option>
+                                            </select>
+                                        </div>
+                                        <div class="nytw-style-grid nytw-style-grid--color nytw-text-anim-color-row">
+                                            <div class="nytw-typo-type"><i class="fa-solid fa-palette"></i> 颜色</div>
+                                            <input id="nytw_text_anim_body_color_picker" class="nytw-color-picker" type="color" value="#8ab4ff" />
+                                            <input id="nytw_text_anim_body_color" class="text_pole nytw-reader-text-input" type="text" placeholder="跟随正文 / #8ab4ff" />
+                                        </div>
+                                        <div class="nytw-creative-row">
+                                            <div class="nytw-creative-label"><i class="fa-solid fa-signal"></i> 强度</div>
+                                            <div class="nytw-range-wrapper">
+                                                <i class="fa-solid fa-minus slow-icon"></i>
+                                                <input id="nytw_text_anim_body_intensity" type="range" min="0" max="80" step="5" class="nytw-creative-range" />
+                                                <i class="fa-solid fa-plus fast-icon"></i>
+                                            </div>
+                                            <div class="nytw-speed-display" id="nytw_text_anim_body_intensity_value"></div>
+                                        </div>
+                                        <div class="nytw-creative-row">
+                                            <div class="nytw-creative-label"><i class="fa-solid fa-clock"></i> 周期</div>
+                                            <div class="nytw-range-wrapper">
+                                                <i class="fa-solid fa-person-running fast-icon"></i>
+                                                <input id="nytw_text_anim_body_period" type="range" min="3" max="30" step="0.5" class="nytw-creative-range" />
+                                                <i class="fa-solid fa-tortoise slow-icon"></i>
+                                            </div>
+                                            <div class="nytw-speed-display" id="nytw_text_anim_body_period_value"></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="nytw-text-anim-target-panel" data-text-anim-target="dialogue">
+                                        <div class="nytw-text-anim-target-heading">
+                                            <div class="nytw-card-section-title"><i class="fa-solid fa-quote-left"></i><span>对话动画</span></div>
+                                            <label class="nytw-switch nytw-text-anim-override">
+                                                <input id="nytw_text_anim_dialogue_override" type="checkbox" />
+                                                <span class="nytw-switch-slider"></span>
+                                                <span>单独设置</span>
+                                            </label>
+                                        </div>
+                                        <div class="nytw-mini-row">
+                                            <div class="nytw-mini-label"><i class="fa-solid fa-wand-sparkles"></i> 效果</div>
+                                            <select id="nytw_text_anim_dialogue_effect" class="nytw-mini-select">
+                                                <option value="none">无</option>
+                                                <option value="breath">呼吸微光</option>
+                                                <option value="edge-glow">边缘辉光</option>
+                                                <option value="sweep">流光扫过</option>
+                                                <option value="ink">墨迹浮动</option>
+                                                <option value="candle">烛火摇曳</option>
+                                                <option value="paper">纸张显影</option>
+                                                <option value="frost">寒霜脉冲</option>
+                                                <option value="glitch">低频故障</option>
+                                            </select>
+                                        </div>
+                                        <div class="nytw-style-grid nytw-style-grid--color nytw-text-anim-color-row">
+                                            <div class="nytw-typo-type"><i class="fa-solid fa-palette"></i> 颜色</div>
+                                            <input id="nytw_text_anim_dialogue_color_picker" class="nytw-color-picker" type="color" value="#ffd27a" />
+                                            <input id="nytw_text_anim_dialogue_color" class="text_pole nytw-reader-text-input" type="text" placeholder="跟随对话 / #ffd27a" />
+                                        </div>
+                                        <div class="nytw-creative-row">
+                                            <div class="nytw-creative-label"><i class="fa-solid fa-signal"></i> 强度</div>
+                                            <div class="nytw-range-wrapper">
+                                                <i class="fa-solid fa-minus slow-icon"></i>
+                                                <input id="nytw_text_anim_dialogue_intensity" type="range" min="0" max="80" step="5" class="nytw-creative-range" />
+                                                <i class="fa-solid fa-plus fast-icon"></i>
+                                            </div>
+                                            <div class="nytw-speed-display" id="nytw_text_anim_dialogue_intensity_value"></div>
+                                        </div>
+                                        <div class="nytw-creative-row">
+                                            <div class="nytw-creative-label"><i class="fa-solid fa-clock"></i> 周期</div>
+                                            <div class="nytw-range-wrapper">
+                                                <i class="fa-solid fa-person-running fast-icon"></i>
+                                                <input id="nytw_text_anim_dialogue_period" type="range" min="3" max="30" step="0.5" class="nytw-creative-range" />
+                                                <i class="fa-solid fa-tortoise slow-icon"></i>
+                                            </div>
+                                            <div class="nytw-speed-display" id="nytw_text_anim_dialogue_period_value"></div>
+                                        </div>
+                                    </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
                     <!-- 独立卡片：字号、字间距与行间距 -->
                     <div class="nytw-display-setting-card" id="nytw_typography_card">
@@ -503,6 +681,25 @@
                     <div id="nytw_imported_fonts_panel" class="nytw-collapsible" aria-hidden="true">
                         <div id="nytw_imported_fonts" class="nytw-imported-fonts"></div>
                     </div>
+
+                    <div class="nytw-font-config-tools" aria-label="字体配置备份">
+                        <div class="nytw-section-title">字体配置备份</div>
+                        <div class="nytw-help nytw-help--compact">
+                            自定义字体储存在浏览器中，若想要分享给他人或更换浏览器使用，请先在此处导出字体配置，后将导出的配置文件导入新浏览器。
+                        </div>
+                        <div class="nytw-config-actions">
+                            <button id="nytw_export_font_config" class="menu_button" type="button">
+                                <i class="fa-solid fa-file-export"></i> 导出字体配置
+                            </button>
+                            <button id="nytw_import_font_config" class="menu_button" type="button">
+                                <i class="fa-solid fa-file-import"></i> 导入字体配置
+                            </button>
+                            <input id="nytw_font_config_file"
+                                   type="file"
+                                   accept=".json,application/json"
+                                   style="display: none;" />
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Tab 4: 使用说明 -->
@@ -513,15 +710,16 @@
                         <div class="flex-container alignItemsCenter nytw-row nytw-row--disclosure nytw-help-toggle is-open" id="nytw_core_help_toggle">
 <label class="nytw-disclosure-label">
                                 <i class="fa-solid fa-circle-info nytw-disclosure-icon" aria-hidden="true"></i>
-                                <span class="nytw-core-title">如何启用字体功能</span>
+                                <span class="nytw-core-title">如何启用主要功能</span>
                             </label>
                         </div>
                         <div class="nytw-collapsible is-open" aria-hidden="true">
                             <div class="nytw-help nytw-help--core">
                                 当功能开关处于“折叠”状态时，对应功能为关闭状态。<br/><br/>
-                                1. 点击 <strong>“点击启用字体覆盖”</strong> 开关，卡片展开，自定义功能启用。<br/>
-                                2. 点击 <strong>“点击开启外部聊天字体导入”</strong> 开关，，卡片展开，加载聊天记录中的网络字体功能启用。<br/><br/>
-                                <i class="fa-solid fa-lightbulb"></i> 开启后开关将显示为流光动画状态。
+                                1. 点击 <strong>“点击启用字体覆盖”</strong>，启用全局/正文/对话/自定义包裹/多语言字体等字体功能。<br/>
+                                2. 点击 <strong>“点击开启外部聊天字体导入”</strong>，启用聊天记录和正则脚本中的网络字体加载。<br/>
+                                3. 在 <strong>“显示设置”</strong> 中可单独开启流式动画、文字动画和阅读样式。<br/><br/>
+                                <i class="fa-solid fa-lightbulb"></i> 开启后的主开关会显示为流光动画状态。
                             </div>
                         </div>
                     </div>
@@ -535,12 +733,14 @@
                     </div>
                     <div class="nytw-collapsible" aria-hidden="true">
                         <div class="nytw-help">
+                            <strong>全局字体：</strong><br/>
+                            影响 SillyTavern 整体界面字体，优先级低于聊天正文、对话和自定义包裹字体。<br/><br/>
                             <strong>正文字体：</strong><br/>
                             设置聊天消息的全局默认字体。留空则使用主题默认字体。<br/><br/>
                             <strong>对话字体：</strong><br/>
-                            设置引号内对话内容的专用字体。支持中文引号（“ ”）、英文引号（" "）等。<br/><br/>
+                            设置引号内对话内容的专用字体。支持中文引号（“ ”）、英文引号（" "）等；文字动画开启时，也会复用这套对话识别范围。<br/><br/>
                             <strong>优先级：</strong><br/>
-                            对话字体 > 正文字体。
+                            自定义包裹 > 按语言设置 > 对话字体 > 正文字体 > 全局字体。
                         </div>
                     </div>
 
@@ -553,11 +753,11 @@
                     </div>
                     <div class="nytw-collapsible" aria-hidden="true">
                         <div class="nytw-help">
-                            在此处配置不同语言/脚本（如日文、韩文、英文、数字等）使用的特定字体。<br/><br/>
+                            在此处配置不同语言/脚本（如 CJK 汉字、日文假名、韩文、英文/拉丁文、数字、标点、Emoji 等）使用的特定字体。<br/><br/>
                             <strong>特性：</strong><br/>
-                            支持在同一句子里混排多种字体。<br/><br/>
+                            支持在同一句消息里混排多种字体，并可通过规则顺序处理重叠范围的优先级。<br/><br/>
                             <strong>优先级：</strong><br/>
-                            按语言设置 > 对话字体 > 正文字体。<br/><br/>
+                            按语言设置 > 对话字体 > 正文字体。自定义包裹字符会覆盖多语言字体。<br/><br/>
                             <strong>提示：</strong><br/>
                             数字/标点若未单独配置，会自动跟随前一段语言的字体（减少视觉断裂）。
                         </div>
@@ -575,7 +775,7 @@
                             为被特定符号包裹的文字设置独立字体。<br/><br/>
                             <strong>用法：</strong><br/>
                             设定起始符号（如 <code>『</code>）和结束符号（如 <code>』</code>）。<br/>
-                            聊天中被这些符号包裹的内容将应用��定字体。<br/><br/>
+                            聊天中被这些符号包裹的内容将应用指定字体；可在阅读样式中继续单独调节这类文本的字号和字距。<br/><br/>
                             <strong>优先级：</strong><br/>
                             自定义包裹 > 按语言设置 > 对话字体 > 正文字体。
                         </div>
@@ -592,7 +792,7 @@
                         <div class="nytw-help">
                             自动扫描并加载聊天记录与正则脚本中的 CSS 字体链接。<br/><br/>
                             <strong>作用：</strong><br/>
-                            解决酒馆（SillyTavern）净化样式导致消息内的 <code>@import</code>字体失效的问题。<br/><br/>
+                            解决酒馆（SillyTavern）净化样式导致消息内的 <code>@import</code> 字体失效的问题。<br/><br/>
                             <strong>支持格式：</strong><br/>
                             CSS <code>@import</code> 语句或 <code>&lt;style&gt;</code> 标签内的引用。
                         </div>
@@ -607,11 +807,17 @@
                     </div>
                     <div class="nytw-collapsible" aria-hidden="true">
                         <div class="nytw-help">
-                            <strong>实时显示：</strong><br/>
-                            在文本生成过程中即时应用字体。体验更流畅。<br/><br/>
-                            <strong>结束后处理：</strong><br/>
-                        待整段回复生成完毕后统一应用字体。<br/><br/>
-                            <i class="fa-solid fa-triangle-exclamation"></i> “实时显示”如遇兼容问题（如字体闪烁、排版错乱），请切回“结束后处理”。
+                            <strong>流式输出渲染模式：</strong><br/>
+                            “实时显示”会在文本生成过程中显示处理后的内容，是启用流式动画的前提；“结束后处理”会在整段回复完成后统一应用字体与样式。<br/><br/>
+                            <strong>流式动画效果：</strong><br/>
+                            可在“关闭 / 打字机 / 模糊显现 / 流光浮现”之间切换，并调节打字速度。打字机模式可配置光标开关、形状、动画和自定义图片。<br/><br/>
+                            <strong>文字动画：</strong><br/>
+                            为已显示的正文/对话添加低能耗长期动画。可设置全局效果，也可让正文或对话单独覆盖全局；支持效果、颜色、强度和周期调节。<br/><br/>
+                            <strong>阅读样式：</strong><br/>
+                            开启后可按整体、正文、对话分别调节字号、字距、行高、颜色、段距、缩进、字重和倾斜；自定义包裹文本与多语言字体范围也可单独设置字号和字距。<br/><br/>
+                            <strong>阅读样式预设：</strong><br/>
+                            可新建、保存、读取、删除、导出和导入 JSON 预设，方便在不同主题或角色卡之间切换排版。<br/><br/>
+                            <i class="fa-solid fa-triangle-exclamation"></i> “实时显示”如遇兼容问题（如字体闪烁、排版错乱），请切回“结束后处理”；长期文字动画主要同步最近的已完成消息。
                         </div>
                     </div>
 
@@ -626,10 +832,39 @@
                         <div class="nytw-help">
                             管理插件使用的额外字体资源。<br/><br/>
                             <strong>Web 字体：</strong><br/>
-                            粘贴 CSS 链接（如 Google Fonts）进行导入。<br/><br/>
-                           <strong>本地文件：</strong><br/>
-                            上传 .woff2, .ttf, .otf 等字体文件。文件将存储在浏览器本地数据库中。<br/><br/>
-                            导入后可在字体选择器的下拉列表中找到这些字体。
+                            粘贴包含 <code>@font-face</code> 或 <code>@import</code> 的 CSS 链接（如 Google Fonts）进行导入。<br/><br/>
+                            <strong>本地文件：</strong><br/>
+                            上传 <code>.woff2</code>、<code>.woff</code>、<code>.ttf</code>、<code>.otf</code> 等字体文件。文件会存储在浏览器本地数据库中，不会上传到服务器。<br/><br/>
+                            <strong>已导入字体：</strong><br/>
+                            可查看、删除已导入字体，或将字体快速设置为全局、正文、对话、自定义包裹字体。<br/><br/>
+                            <strong>字体配置备份：</strong><br/>
+                            可导出/导入已导入字体配置。导出文件会包含本地字体文件数据，适合换浏览器、分享配置或清理浏览器存储前备份。
+                        </div>
+                    </div>
+
+                    <!-- Group: 导入字体无法使用 -->
+                    <div class="flex-container alignItemsCenter nytw-row nytw-row--disclosure nytw-help-toggle">
+                        <label class="nytw-disclosure-label">
+                            <i class="fa-solid fa-chevron-right nytw-disclosure-icon" aria-hidden="true"></i>
+                            导入字体无法使用
+                        </label>
+                    </div>
+                    <div class="nytw-collapsible" aria-hidden="true">
+                        <div class="nytw-help">
+                            <strong>常见原因：</strong><br/>
+                            1. 字体 family 名称与真实字体名不一致，或 Web 字体 CSS 中声明的名称和输入名称不同。<br/>
+                            2. Web 字体链接网址失效、无法访问、被跨域策略拦截，或 CSS 内没有有效的 <code>@font-face</code>/<code>@import</code> 字体声明。<br/>
+                            3. 本地字体文件损坏、格式不被浏览器支持，或字体文件过大导致首次加载较慢。<br/>
+                            4. 本地字体存储在浏览器 IndexedDB 中，更换浏览器、清理站点数据、隐私模式或浏览器禁用存储后，字体文件数据可能丢失。<br/><br/>
+
+                            <strong>排查步骤：</strong><br/>
+                            1. 先确认字体出现在“已导入字体”列表中，并使用列表里的“设为全局 / 正文 / 对话 / 自定义”按钮应用。<br/>
+                            2. 若应用后仍无变化，刷新页面后再试一次；插件会在应用前校验字体是否能被浏览器实际加载。<br/>
+                            3. Web 字体请确认 CSS 链接能直接打开，且其中包含有效字体声明；无法稳定访问的 CDN 建议改用本地字体文件。<br/>
+                            4. 本地字体优先使用 <code>.woff2</code> 或 <code>.woff</code>；中文大字体建议使用裁剪版本，减少加载延迟。<br/><br/>
+
+                            <strong>解决建议：</strong><br/>
+                            如果插件提示 family 自动匹配，请优先使用提示中的真实 family 名称。若提示字体文件缺失，请重新导入原字体文件，或从之前导出的“字体配置备份”恢复。清理浏览器存储或迁移浏览器前，建议先导出字体配置备份。
                         </div>
                     </div>
 

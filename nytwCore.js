@@ -2,15 +2,30 @@
 import { applyCustomIndependentFont, CUSTOM_INDEPENDENT_FONT_CLASS, CUSTOM_INDEPENDENT_FONT_MARK_ATTR } from './customIndependentFont.js';
 import { morphdom } from '../../../../lib.js';
 import {
+    isLikelyNytwMarkdownTableSource,
+    isNytwProtectedContentElement,
+    isWithinNytwProtectedContent,
+    NYTW_PROTECTED_CONTENT_SELECTOR,
+} from './nytwProtectedContent.js';
+import {
     clampOptionalFontSize,
     clampOptionalLetterSpacing,
     clampOptionalLineHeight,
+    clampOptionalParagraphSpacing,
+    clampOptionalTextIndent,
     clampStreamAnimSpeed,
+    clampTextAnimIntensity,
+    clampTextAnimPeriod,
     getStreamRenderMode,
+    normalizeOptionalCssColor,
+    normalizeOptionalFontStyle,
+    normalizeOptionalFontWeight,
     normalizeStreamAnimEffect,
     normalizeStreamCursorAnim,
     normalizeStreamCursorImageUrl,
     normalizeStreamCursorShape,
+    normalizeTextAnimColor,
+    normalizeTextAnimEffect,
     settings,
 } from './nytwState.js';
 import { LOCALE_KEY_PRIORITY, UNICODE_RANGES } from './nytwLocaleData.js';
@@ -53,6 +68,26 @@ const STREAM_SEG_COUNT_DATA = 'nytwStreamSegCount';
 const STREAM_SHOWN_COUNT_DATA = 'nytwStreamShownCount';
 const STREAM_STEP_VAR = '--nytw-stream-step';
 const STREAM_CURSOR_IMAGE_VAR = '--nytw-stream-cursor-image';
+const READING_STYLE_ID = 'nytw-reading-style';
+const TEXT_ANIM_ATTR = 'data-nytw-text-anim';
+const TEXT_ANIM_ROLE_ATTR = 'data-nytw-text-anim-role';
+const TEXT_ANIM_BODY_WRAP_ATTR = 'data-nytw-text-anim-body-wrap';
+const TEXT_ANIM_COLOR_VAR = '--nytw-text-anim-color';
+const TEXT_ANIM_POWER_VAR = '--nytw-text-anim-power';
+const TEXT_ANIM_CYCLE_VAR = '--nytw-text-anim-cycle';
+const TEXT_ANIM_SHADOW_VAR = '--nytw-text-anim-shadow';
+const TEXT_ANIM_SHADOW_SOFT_VAR = '--nytw-text-anim-shadow-soft';
+const TEXT_ANIM_SHADOW_DEEP_VAR = '--nytw-text-anim-shadow-deep';
+const TEXT_ANIM_SHIFT_VAR = '--nytw-text-anim-shift';
+const TEXT_ANIM_SHIFT_NEG_VAR = '--nytw-text-anim-shift-neg';
+const TEXT_ANIM_SHIFT_SOFT_VAR = '--nytw-text-anim-shift-soft';
+const TEXT_ANIM_SHIFT_SOFT_NEG_VAR = '--nytw-text-anim-shift-soft-neg';
+const TEXT_ANIM_DIM_VAR = '--nytw-text-anim-dim';
+const TEXT_ANIM_VEIL_VAR = '--nytw-text-anim-veil';
+const TEXT_ANIM_MAX_ACTIVE = 12;
+const TEXT_ANIM_DIALOGUE_SELECTOR = '.Ny-font-manager, .custom-Ny-font-manager, .ny-dialogue, .custom-ny-dialogue, q';
+const TEXT_ANIM_BODY_BLOCK_SELECTOR = ':scope > p, :scope > div, :scope > span, :scope > blockquote, :scope > ul, :scope > ol';
+const TEXT_ANIM_SKIP_SELECTOR = NYTW_PROTECTED_CONTENT_SELECTOR;
 
 const LOCALE_FONT_ATTR = 'data-nytw-locale-font';
 const LOCALE_WRAP_ATTR = 'data-nytw-locale-wrap';
@@ -98,6 +133,77 @@ function queueApplyFonts() {
         .catch((error) => console.error('[NyTW] Failed to apply fonts', error));
 }
 
+function ensureReadingStyleElement() {
+    let styleEl = document.getElementById(READING_STYLE_ID);
+    if (!styleEl) {
+        styleEl = document.createElement('style');
+        styleEl.id = READING_STYLE_ID;
+        document.head.appendChild(styleEl);
+    }
+    return styleEl;
+}
+
+function removeReadingStyleElement() {
+    document.getElementById(READING_STYLE_ID)?.remove();
+}
+
+function buildReadingStyleCss() {
+    return [
+        '/* NyTW Reading Style (generated) */',
+        '\n#chat .mes_text,',
+        '#chat .mes_text i,',
+        '#chat .mes_text em,',
+        '#chat .mes_text u,',
+        '#chat .mes_text strong',
+        '{',
+        'font-size:var(--nytw-body-font-size,var(--nytw-overall-font-size)) !important;',
+        'letter-spacing:var(--nytw-body-letter-spacing,var(--nytw-overall-letter-spacing)) !important;',
+        'line-height:var(--nytw-body-line-height,var(--nytw-overall-line-height)) !important;',
+        'color:var(--nytw-body-text-color,var(--nytw-overall-text-color)) !important;',
+        'text-indent:var(--nytw-body-text-indent,var(--nytw-overall-text-indent)) !important;',
+        'font-weight:var(--nytw-body-font-weight,var(--nytw-overall-font-weight)) !important;',
+        'font-style:var(--nytw-body-font-style,var(--nytw-overall-font-style)) !important;',
+        '}',
+        '\n#chat .mes_text p,#chat .mes_text li,#chat .mes_text blockquote{',
+        'margin-top:var(--nytw-body-paragraph-spacing,var(--nytw-overall-paragraph-spacing)) !important;',
+        'margin-bottom:var(--nytw-body-paragraph-spacing,var(--nytw-overall-paragraph-spacing)) !important;',
+        'text-indent:var(--nytw-body-text-indent,var(--nytw-overall-text-indent)) !important;',
+        '}',
+        '\n#chat .mes_text .Ny-font-manager,',
+        '#chat .mes_text .custom-Ny-font-manager,',
+        '#chat .mes_text .ny-dialogue,',
+        '#chat .mes_text .custom-ny-dialogue,',
+        '#chat .mes_text q',
+        '{font-size:var(--nytw-dialogue-font-size,var(--nytw-body-font-size,var(--nytw-overall-font-size))) !important;',
+        'letter-spacing:var(--nytw-dialogue-letter-spacing,var(--nytw-body-letter-spacing,var(--nytw-overall-letter-spacing))) !important;',
+        'line-height:var(--nytw-dialogue-line-height,var(--nytw-body-line-height,var(--nytw-overall-line-height))) !important;',
+        'color:var(--nytw-dialogue-text-color,var(--nytw-body-text-color,var(--nytw-overall-text-color))) !important;',
+        'text-indent:var(--nytw-dialogue-text-indent,var(--nytw-body-text-indent,var(--nytw-overall-text-indent))) !important;',
+        'padding-left:var(--nytw-dialogue-text-indent,var(--nytw-body-text-indent,var(--nytw-overall-text-indent))) !important;',
+        'font-weight:var(--nytw-dialogue-font-weight,var(--nytw-body-font-weight,var(--nytw-overall-font-weight))) !important;',
+        'font-style:var(--nytw-dialogue-font-style,var(--nytw-body-font-style,var(--nytw-overall-font-style))) !important;}',
+        '\n#chat .mes_text .Ny-font-manager *,',
+        '#chat .mes_text .custom-Ny-font-manager *,',
+        '#chat .mes_text .ny-dialogue *,',
+        '#chat .mes_text .custom-ny-dialogue *,',
+        '#chat .mes_text q *',
+        '{font-size:var(--nytw-dialogue-font-size,var(--nytw-body-font-size,var(--nytw-overall-font-size))) !important;',
+        'letter-spacing:var(--nytw-dialogue-letter-spacing,var(--nytw-body-letter-spacing,var(--nytw-overall-letter-spacing))) !important;',
+        'line-height:var(--nytw-dialogue-line-height,var(--nytw-body-line-height,var(--nytw-overall-line-height))) !important;',
+        'color:var(--nytw-dialogue-text-color,var(--nytw-body-text-color,var(--nytw-overall-text-color))) !important;',
+        'font-weight:var(--nytw-dialogue-font-weight,var(--nytw-body-font-weight,var(--nytw-overall-font-weight))) !important;',
+        'font-style:var(--nytw-dialogue-font-style,var(--nytw-body-font-style,var(--nytw-overall-font-style))) !important;}',
+        '\n#chat .mes_text .Ny-font-manager p,#chat .mes_text .custom-Ny-font-manager p,#chat .mes_text .ny-dialogue p,#chat .mes_text .custom-ny-dialogue p{',
+        'margin-top:var(--nytw-dialogue-paragraph-spacing,var(--nytw-body-paragraph-spacing,var(--nytw-overall-paragraph-spacing))) !important;',
+        'margin-bottom:var(--nytw-dialogue-paragraph-spacing,var(--nytw-body-paragraph-spacing,var(--nytw-overall-paragraph-spacing))) !important;',
+        'text-indent:var(--nytw-dialogue-text-indent,var(--nytw-body-text-indent,var(--nytw-overall-text-indent))) !important;}',
+    ].join('');
+}
+
+function applyReadingStyleRules() {
+    ensureReadingStyleElement().textContent = buildReadingStyleCss();
+}
+
 function setOrRemoveCssVar(el, name, value) {
     if (!el || !(el instanceof HTMLElement)) return;
     const raw = String(value ?? '').trim();
@@ -113,8 +219,28 @@ function clearTypographyVariables(chatEl) {
 
     chatEl.style.removeProperty('--nytw-body-font-size');
     chatEl.style.removeProperty('--nytw-body-letter-spacing');
+    chatEl.style.removeProperty('--nytw-body-line-height');
+    chatEl.style.removeProperty('--nytw-body-text-color');
+    chatEl.style.removeProperty('--nytw-body-paragraph-spacing');
+    chatEl.style.removeProperty('--nytw-body-text-indent');
+    chatEl.style.removeProperty('--nytw-body-font-weight');
+    chatEl.style.removeProperty('--nytw-body-font-style');
+    chatEl.style.removeProperty('--nytw-overall-font-size');
+    chatEl.style.removeProperty('--nytw-overall-letter-spacing');
+    chatEl.style.removeProperty('--nytw-overall-line-height');
+    chatEl.style.removeProperty('--nytw-overall-text-color');
+    chatEl.style.removeProperty('--nytw-overall-paragraph-spacing');
+    chatEl.style.removeProperty('--nytw-overall-text-indent');
+    chatEl.style.removeProperty('--nytw-overall-font-weight');
+    chatEl.style.removeProperty('--nytw-overall-font-style');
     chatEl.style.removeProperty('--nytw-dialogue-font-size');
     chatEl.style.removeProperty('--nytw-dialogue-letter-spacing');
+    chatEl.style.removeProperty('--nytw-dialogue-line-height');
+    chatEl.style.removeProperty('--nytw-dialogue-text-color');
+    chatEl.style.removeProperty('--nytw-dialogue-paragraph-spacing');
+    chatEl.style.removeProperty('--nytw-dialogue-text-indent');
+    chatEl.style.removeProperty('--nytw-dialogue-font-weight');
+    chatEl.style.removeProperty('--nytw-dialogue-font-style');
     chatEl.style.removeProperty('--nytw-custom-font-size');
     chatEl.style.removeProperty('--nytw-custom-letter-spacing');
     chatEl.style.removeProperty('--nytw-locale-font-size');
@@ -124,32 +250,74 @@ function clearTypographyVariables(chatEl) {
 
 function applyTypographyVariables() {
     const chatEl = document.getElementById('chat');
-    if (!chatEl) return;
 
-    if (!settings.fontsEnabled) {
-        clearTypographyVariables(chatEl);
+    if (settings.readingStyleEnabled !== true) {
+        if (chatEl) clearTypographyVariables(chatEl);
+        removeReadingStyleElement();
         return;
     }
 
+    applyReadingStyleRules();
+    if (!chatEl) return;
+
+    const overallFontSize = clampOptionalFontSize(settings.overallFontSize);
+    const overallLetterSpacing = clampOptionalLetterSpacing(settings.overallLetterSpacing);
+    const overallLineHeight = clampOptionalLineHeight(settings.overallLineHeight);
+    const overallTextColor = normalizeOptionalCssColor(settings.overallTextColor);
+    const overallParagraphSpacing = clampOptionalParagraphSpacing(settings.overallParagraphSpacing);
+    const overallTextIndent = clampOptionalTextIndent(settings.overallTextIndent);
+    const overallFontWeight = normalizeOptionalFontWeight(settings.overallFontWeight);
+    const overallFontStyle = normalizeOptionalFontStyle(settings.overallFontStyle);
     const bodyFontSize = clampOptionalFontSize(settings.bodyFontSize);
     const bodyLetterSpacing = clampOptionalLetterSpacing(settings.bodyLetterSpacing);
+    const bodyLineHeight = clampOptionalLineHeight(settings.lineHeight);
+    const bodyTextColor = normalizeOptionalCssColor(settings.bodyTextColor);
+    const bodyParagraphSpacing = clampOptionalParagraphSpacing(settings.bodyParagraphSpacing);
+    const bodyTextIndent = clampOptionalTextIndent(settings.bodyTextIndent);
+    const bodyFontWeight = normalizeOptionalFontWeight(settings.bodyFontWeight);
+    const bodyFontStyle = normalizeOptionalFontStyle(settings.bodyFontStyle);
     const dialogueFontSize = clampOptionalFontSize(settings.dialogueFontSize);
     const dialogueLetterSpacing = clampOptionalLetterSpacing(settings.dialogueLetterSpacing);
+    const dialogueLineHeight = clampOptionalLineHeight(settings.dialogueLineHeight);
+    const dialogueTextColor = normalizeOptionalCssColor(settings.dialogueTextColor);
+    const dialogueParagraphSpacing = clampOptionalParagraphSpacing(settings.dialogueParagraphSpacing);
+    const dialogueTextIndent = clampOptionalTextIndent(settings.dialogueTextIndent);
+    const dialogueFontWeight = normalizeOptionalFontWeight(settings.dialogueFontWeight);
+    const dialogueFontStyle = normalizeOptionalFontStyle(settings.dialogueFontStyle);
     const customFontSize = clampOptionalFontSize(settings.customFontSize);
     const customLetterSpacing = clampOptionalLetterSpacing(settings.customLetterSpacing);
     const localeFontSize = clampOptionalFontSize(settings.localeFontSize);
     const localeLetterSpacing = clampOptionalLetterSpacing(settings.localeLetterSpacing);
-    const lineHeight = clampOptionalLineHeight(settings.lineHeight);
 
+    setOrRemoveCssVar(chatEl, '--nytw-overall-font-size', overallFontSize === null ? '' : `${overallFontSize}px`);
+    setOrRemoveCssVar(chatEl, '--nytw-overall-letter-spacing', overallLetterSpacing === null ? '' : `${overallLetterSpacing}em`);
+    setOrRemoveCssVar(chatEl, '--nytw-overall-line-height', overallLineHeight === null ? '' : String(overallLineHeight));
+    setOrRemoveCssVar(chatEl, '--nytw-overall-text-color', overallTextColor);
+    setOrRemoveCssVar(chatEl, '--nytw-overall-paragraph-spacing', overallParagraphSpacing === null ? '' : `${overallParagraphSpacing}em`);
+    setOrRemoveCssVar(chatEl, '--nytw-overall-text-indent', overallTextIndent === null ? '' : `${overallTextIndent}em`);
+    setOrRemoveCssVar(chatEl, '--nytw-overall-font-weight', overallFontWeight);
+    setOrRemoveCssVar(chatEl, '--nytw-overall-font-style', overallFontStyle);
     setOrRemoveCssVar(chatEl, '--nytw-body-font-size', bodyFontSize === null ? '' : `${bodyFontSize}px`);
     setOrRemoveCssVar(chatEl, '--nytw-body-letter-spacing', bodyLetterSpacing === null ? '' : `${bodyLetterSpacing}em`);
+    setOrRemoveCssVar(chatEl, '--nytw-body-line-height', bodyLineHeight === null ? '' : String(bodyLineHeight));
+    setOrRemoveCssVar(chatEl, '--nytw-body-text-color', bodyTextColor);
+    setOrRemoveCssVar(chatEl, '--nytw-body-paragraph-spacing', bodyParagraphSpacing === null ? '' : `${bodyParagraphSpacing}em`);
+    setOrRemoveCssVar(chatEl, '--nytw-body-text-indent', bodyTextIndent === null ? '' : `${bodyTextIndent}em`);
+    setOrRemoveCssVar(chatEl, '--nytw-body-font-weight', bodyFontWeight);
+    setOrRemoveCssVar(chatEl, '--nytw-body-font-style', bodyFontStyle);
     setOrRemoveCssVar(chatEl, '--nytw-dialogue-font-size', dialogueFontSize === null ? '' : `${dialogueFontSize}px`);
     setOrRemoveCssVar(chatEl, '--nytw-dialogue-letter-spacing', dialogueLetterSpacing === null ? '' : `${dialogueLetterSpacing}em`);
+    setOrRemoveCssVar(chatEl, '--nytw-dialogue-line-height', dialogueLineHeight === null ? '' : String(dialogueLineHeight));
+    setOrRemoveCssVar(chatEl, '--nytw-dialogue-text-color', dialogueTextColor);
+    setOrRemoveCssVar(chatEl, '--nytw-dialogue-paragraph-spacing', dialogueParagraphSpacing === null ? '' : `${dialogueParagraphSpacing}em`);
+    setOrRemoveCssVar(chatEl, '--nytw-dialogue-text-indent', dialogueTextIndent === null ? '' : `${dialogueTextIndent}em`);
+    setOrRemoveCssVar(chatEl, '--nytw-dialogue-font-weight', dialogueFontWeight);
+    setOrRemoveCssVar(chatEl, '--nytw-dialogue-font-style', dialogueFontStyle);
     setOrRemoveCssVar(chatEl, '--nytw-custom-font-size', customFontSize === null ? '' : `${customFontSize}px`);
     setOrRemoveCssVar(chatEl, '--nytw-custom-letter-spacing', customLetterSpacing === null ? '' : `${customLetterSpacing}em`);
     setOrRemoveCssVar(chatEl, '--nytw-locale-font-size', localeFontSize === null ? '' : `${localeFontSize}px`);
     setOrRemoveCssVar(chatEl, '--nytw-locale-letter-spacing', localeLetterSpacing === null ? '' : `${localeLetterSpacing}em`);
-    setOrRemoveCssVar(chatEl, '--nytw-line-height', lineHeight === null ? '' : String(lineHeight));
+    setOrRemoveCssVar(chatEl, '--nytw-line-height', bodyLineHeight === null ? '' : String(bodyLineHeight));
 }
 
 const fontValidationNoticeSigByField = new Map();
@@ -255,6 +423,7 @@ async function applyFontSettings() {
         fontAutoMatchNoticeSigByField.clear();
         invalidConfiguredFontFamilies.clear();
         applyTypographyVariables();
+        syncTextAnimationTargets();
         return;
     }
 
@@ -340,16 +509,8 @@ async function applyFontSettings() {
         ].join('');
     }
 
-    css += '\n/* Typography overrides (font-size / letter-spacing / line-height) */\n';
-    css += '\n#chat .mes_text{font-size:var(--nytw-body-font-size) !important;letter-spacing:var(--nytw-body-letter-spacing) !important;line-height:var(--nytw-line-height) !important;}';
+    css += '\n/* Scoped typography overrides for locale/custom font ranges */\n';
     css += `\n#chat .mes_text [${LOCALE_FONT_ATTR}]{font-size:var(--nytw-locale-font-size) !important;letter-spacing:var(--nytw-locale-letter-spacing) !important;}`;
-    css += [
-        '\n#chat .mes_text .Ny-font-manager,',
-        '#chat .mes_text .custom-Ny-font-manager,',
-        '#chat .mes_text .ny-dialogue,',
-        '#chat .mes_text .custom-ny-dialogue',
-        '{font-size:var(--nytw-dialogue-font-size) !important;letter-spacing:var(--nytw-dialogue-letter-spacing) !important;}',
-    ].join('');
     css += `\n#chat .mes_text .${CUSTOM_INDEPENDENT_FONT_CLASS},#chat .mes_text .custom-${CUSTOM_INDEPENDENT_FONT_CLASS}{font-size:var(--nytw-custom-font-size) !important;letter-spacing:var(--nytw-custom-letter-spacing) !important;}`;
 
     css += [
@@ -414,6 +575,7 @@ async function applyFontSettings() {
 
     styleEl.textContent = css;
     applyTypographyVariables();
+    syncTextAnimationTargets();
 }
 
 function stripStreamingBufferWhitespace(rootEl) {
@@ -484,12 +646,14 @@ function applyQuoteWrapping(rootEl) {
     const walker = document.createTreeWalker(rootEl, NodeFilter.SHOW_TEXT, {
         acceptNode(node) {
             if (!node || !node.nodeValue) return NodeFilter.FILTER_REJECT;
+            if (isLikelyNytwMarkdownTableSource(node.nodeValue)) return NodeFilter.FILTER_REJECT;
             const text = node.nodeValue;
             if (!quotePairs.some(([open]) => text.includes(open))) return NodeFilter.FILTER_REJECT;
 
             const parent = node.parentElement;
             if (!parent) return NodeFilter.FILTER_REJECT;
-            if (parent.closest('style, script, textarea, pre, code, q')) return NodeFilter.FILTER_REJECT;
+            if (isWithinNytwProtectedContent(parent)) return NodeFilter.FILTER_REJECT;
+            if (parent.closest('q')) return NodeFilter.FILTER_REJECT;
             return NodeFilter.FILTER_ACCEPT;
         },
     });
@@ -564,10 +728,25 @@ function getDialogueFontContainerSignature(containerEl) {
     return `${textLen}:${qCount}:${markedQCount}`;
 }
 
+function shouldProcessDialogueMarkup() {
+    if (!settings.fontsEnabled) return false;
+    if (String(settings.dialogueFont || '').trim()) return true;
+    if (settings.textAnimEnabled !== true) return false;
+
+    const globalEffect = normalizeTextAnimEffect(settings.textAnimGlobalEffect);
+    const bodyEffect = settings.textAnimBodyOverride === true
+        ? normalizeTextAnimEffect(settings.textAnimBodyEffect)
+        : globalEffect;
+    const dialogueEffect = settings.textAnimDialogueOverride === true
+        ? normalizeTextAnimEffect(settings.textAnimDialogueEffect)
+        : globalEffect;
+
+    return bodyEffect !== 'none' || dialogueEffect !== 'none';
+}
+
 function applyDialogueFontToQuotes(containerEl) {
     if (!containerEl || !(containerEl instanceof HTMLElement)) return;
-    if (!settings.fontsEnabled) return;
-    if (!String(settings.dialogueFont || '').trim()) return;
+    if (!shouldProcessDialogueMarkup()) return;
 
     const prevSig = dialogueFontProcessSig.get(containerEl);
     const sig = getDialogueFontContainerSignature(containerEl);
@@ -586,6 +765,7 @@ function applyDialogueFontToQuotes(containerEl) {
     const qEls = Array.from(containerEl.querySelectorAll('q'));
     for (const q of qEls) {
         if (!(q instanceof HTMLElement)) continue;
+        if (isWithinNytwProtectedContent(q)) continue;
 
         if (q.closest('.ny-custom, .custom-ny-custom')) {
             q.classList.remove('ny-dialogue', 'custom-ny-dialogue');
@@ -817,9 +997,10 @@ function collectEligibleLocaleTextNodes(containerEl) {
     const walker = document.createTreeWalker(containerEl, NodeFilter.SHOW_TEXT, {
         acceptNode(node) {
             if (!node || !node.nodeValue) return NodeFilter.FILTER_REJECT;
+            if (isLikelyNytwMarkdownTableSource(node.nodeValue)) return NodeFilter.FILTER_REJECT;
             const parent = node.parentElement;
             if (!parent) return NodeFilter.FILTER_REJECT;
-            if (parent.closest('style, script, textarea, pre, code')) return NodeFilter.FILTER_REJECT;
+            if (isWithinNytwProtectedContent(parent)) return NodeFilter.FILTER_REJECT;
             if (parent.closest(`.${CUSTOM_INDEPENDENT_FONT_CLASS}, .custom-${CUSTOM_INDEPENDENT_FONT_CLASS}`)) return NodeFilter.FILTER_REJECT;
             if (parent.closest(`[${CUSTOM_INDEPENDENT_FONT_MARK_ATTR}]`)) return NodeFilter.FILTER_REJECT;
             if (parent.closest(`.${CHAR_CLASS.split(' ')[0]}`)) return NodeFilter.FILTER_REJECT;
@@ -874,6 +1055,11 @@ function applyLocaleFontsToTypewriterChars(containerEl, activeKeys) {
 
     for (const el of chars) {
         if (!(el instanceof HTMLElement)) continue;
+
+        if (isWithinNytwProtectedContent(el)) {
+            el.removeAttribute(LOCALE_FONT_ATTR);
+            continue;
+        }
 
         // Custom independent font always wins.
         if (el.closest(`[${CUSTOM_INDEPENDENT_FONT_MARK_ATTR}]`)) {
@@ -973,16 +1159,21 @@ function segmentTextForStreamingAnimation(rootEl, { granularity = 'word', baseIn
                 const parent = node.parentElement;
                 if (!parent) return NodeFilter.FILTER_REJECT;
                 if (parent.closest(`.${STREAM_SEG_CLASS}`)) return NodeFilter.FILTER_REJECT;
-                if (parent.closest('pre, code, textarea, script, style')) return NodeFilter.FILTER_REJECT;
+                if (isWithinNytwProtectedContent(parent)) return NodeFilter.FILTER_REJECT;
                 return NodeFilter.FILTER_ACCEPT;
             }
-            if (node.nodeType === Node.ELEMENT_NODE) return NodeFilter.FILTER_SKIP;
+            if (node.nodeType === Node.ELEMENT_NODE) {
+                const el = /** @type {Element} */ (node);
+                if (isNytwProtectedContentElement(el)) return NodeFilter.FILTER_REJECT;
+                return NodeFilter.FILTER_SKIP;
+            }
 
             if (!node || !node.nodeValue) return NodeFilter.FILTER_REJECT;
+            if (isLikelyNytwMarkdownTableSource(node.nodeValue)) return NodeFilter.FILTER_REJECT;
             const parent = node.parentElement;
             if (!parent) return NodeFilter.FILTER_REJECT;
             if (parent.closest(`.${STREAM_SEG_CLASS}`)) return NodeFilter.FILTER_REJECT;
-            if (parent.closest('pre, code, textarea, script, style')) return NodeFilter.FILTER_REJECT;
+            if (isWithinNytwProtectedContent(parent)) return NodeFilter.FILTER_REJECT;
             if (/^\\s*$/.test(node.nodeValue)) return NodeFilter.FILTER_REJECT;
             return NodeFilter.FILTER_ACCEPT;
         },
@@ -1058,6 +1249,10 @@ function typewriterizeNode(node, ctx) {
     if (!node) return document.createDocumentFragment();
 
     if (node.nodeType === Node.TEXT_NODE) {
+        if (isLikelyNytwMarkdownTableSource(node.textContent || '')) {
+            return document.createTextNode(node.textContent || '');
+        }
+
         const frag = document.createDocumentFragment();
         const segments = splitGraphemes(node.textContent || '');
         for (const segment of segments) {
@@ -1078,6 +1273,10 @@ function typewriterizeNode(node, ctx) {
 
     if (node.nodeType === Node.ELEMENT_NODE) {
         const el = /** @type {Element} */ (node);
+
+        if (isNytwProtectedContentElement(el)) {
+            return el.cloneNode(true);
+        }
 
         if (el.tagName === 'BR') {
             return document.createElement('br');
@@ -1199,6 +1398,7 @@ function wrapBundleQuotesAndCustom(rootEl) {
     for (const q of qEls) {
         if (!(q instanceof HTMLElement)) continue;
         if (!q.parentElement) continue;
+        if (isWithinNytwProtectedContent(q)) continue;
         if (dialogueOuterClass && q.closest(`.${dialogueOuterClass}`)) continue;
         if (customOuterClass && q.closest(`.${customOuterClass}`)) continue;
 
@@ -1236,11 +1436,12 @@ function wrapBundleQuotesAndCustom(rootEl) {
         const walker = document.createTreeWalker(rootEl, NodeFilter.SHOW_TEXT, {
             acceptNode(node) {
                 if (!node || !node.nodeValue) return NodeFilter.FILTER_REJECT;
+                if (isLikelyNytwMarkdownTableSource(node.nodeValue)) return NodeFilter.FILTER_REJECT;
                 if (!node.nodeValue.includes(customOpen)) return NodeFilter.FILTER_REJECT;
                 const parent = node.parentElement;
                 if (!parent) return NodeFilter.FILTER_REJECT;
                 if (parent.closest(`.${customOuterClass}`)) return NodeFilter.FILTER_REJECT;
-                if (parent.closest('style, script, textarea, pre, code')) return NodeFilter.FILTER_REJECT;
+                if (isWithinNytwProtectedContent(parent)) return NodeFilter.FILTER_REJECT;
                 return NodeFilter.FILTER_ACCEPT;
             },
         });
@@ -1314,6 +1515,249 @@ function cleanupStreamingBuffer(messageEl) {
     messageEl.style?.removeProperty?.('--nytw-stream-p-mb-last');
     const buffer = messageEl.querySelector(`.mes_text.${STREAM_BUFFER_CLASS}`);
     buffer?.remove();
+}
+
+function unwrapTextAnimationBodyWrapper(el) {
+    if (!el || !(el instanceof HTMLElement)) return;
+    if (!el.hasAttribute(TEXT_ANIM_BODY_WRAP_ATTR)) return;
+
+    const parent = el.parentNode;
+    if (!parent) {
+        el.remove();
+        return;
+    }
+
+    while (el.firstChild) {
+        parent.insertBefore(el.firstChild, el);
+    }
+    parent.removeChild(el);
+    parent.normalize?.();
+}
+
+function cleanupTextAnimationBodyWrappers(root = document) {
+    root.querySelectorAll?.(`[${TEXT_ANIM_BODY_WRAP_ATTR}]`).forEach((el) => {
+        if (el instanceof HTMLElement) unwrapTextAnimationBodyWrapper(el);
+    });
+}
+
+function clearTextAnimationTarget(el, { unwrapBodyWrapper = false } = {}) {
+    if (!el || !(el instanceof HTMLElement)) return;
+    el.removeAttribute(TEXT_ANIM_ATTR);
+    el.removeAttribute(TEXT_ANIM_ROLE_ATTR);
+    el.style?.removeProperty?.(TEXT_ANIM_COLOR_VAR);
+    el.style?.removeProperty?.(TEXT_ANIM_POWER_VAR);
+    el.style?.removeProperty?.(TEXT_ANIM_CYCLE_VAR);
+    el.style?.removeProperty?.(TEXT_ANIM_SHADOW_VAR);
+    el.style?.removeProperty?.(TEXT_ANIM_SHADOW_SOFT_VAR);
+    el.style?.removeProperty?.(TEXT_ANIM_SHADOW_DEEP_VAR);
+    el.style?.removeProperty?.(TEXT_ANIM_SHIFT_VAR);
+    el.style?.removeProperty?.(TEXT_ANIM_SHIFT_NEG_VAR);
+    el.style?.removeProperty?.(TEXT_ANIM_SHIFT_SOFT_VAR);
+    el.style?.removeProperty?.(TEXT_ANIM_SHIFT_SOFT_NEG_VAR);
+    el.style?.removeProperty?.(TEXT_ANIM_DIM_VAR);
+    el.style?.removeProperty?.(TEXT_ANIM_VEIL_VAR);
+    if (unwrapBodyWrapper) unwrapTextAnimationBodyWrapper(el);
+}
+
+function getTextAnimationConfig(role) {
+    const normalizedRole = role === 'dialogue' ? 'dialogue' : (role === 'global' ? 'global' : 'body');
+    const prefix = normalizedRole === 'dialogue'
+        ? 'textAnimDialogue'
+        : (normalizedRole === 'global' ? 'textAnimGlobal' : 'textAnimBody');
+    return {
+        role: normalizedRole,
+        effect: normalizeTextAnimEffect(settings[`${prefix}Effect`]),
+        color: normalizeTextAnimColor(settings[`${prefix}Color`]),
+        intensity: clampTextAnimIntensity(settings[`${prefix}Intensity`]),
+        period: clampTextAnimPeriod(settings[`${prefix}Period`]),
+    };
+}
+
+function getResolvedTextAnimationConfig(role) {
+    const normalizedRole = role === 'dialogue' ? 'dialogue' : 'body';
+    const usesOverride = normalizedRole === 'dialogue'
+        ? settings.textAnimDialogueOverride === true
+        : settings.textAnimBodyOverride === true;
+
+    const config = usesOverride
+        ? getTextAnimationConfig(normalizedRole)
+        : getTextAnimationConfig('global');
+
+    return { ...config, role: normalizedRole };
+}
+
+function isTextAnimationConfigActive(config) {
+    return Boolean(config && config.effect !== 'none');
+}
+
+function applyTextAnimationTarget(el, config) {
+    if (!el || !(el instanceof HTMLElement)) return;
+    const { role, effect, color, intensity, period } = config;
+    const shadowPx = intensity <= 0 ? 0 : Math.round(intensity * 1.6) / 10;
+    const shadowSoftPx = Math.round(shadowPx * 0.55 * 10) / 10;
+    const shadowDeepPx = Math.round(shadowPx * 1.55 * 10) / 10;
+    const shiftPx = intensity <= 0 ? 0 : Math.max(0.4, Math.round(intensity * 0.025 * 10) / 10);
+    const shiftSoftPx = shiftPx ? Math.round(shiftPx * 0.6 * 10) / 10 : 0;
+    const dim = Math.max(0.86, 1 - (intensity * 0.0018));
+    const veil = Math.max(0.52, 1 - (intensity * 0.006));
+    el.setAttribute(TEXT_ANIM_ATTR, effect);
+    el.setAttribute(TEXT_ANIM_ROLE_ATTR, role);
+    el.style?.setProperty?.(TEXT_ANIM_COLOR_VAR, color || 'currentColor');
+    el.style?.setProperty?.(TEXT_ANIM_POWER_VAR, String(intensity / 100));
+    el.style?.setProperty?.(TEXT_ANIM_CYCLE_VAR, `${period}s`);
+    el.style?.setProperty?.(TEXT_ANIM_SHADOW_VAR, `${shadowPx}px`);
+    el.style?.setProperty?.(TEXT_ANIM_SHADOW_SOFT_VAR, `${shadowSoftPx}px`);
+    el.style?.setProperty?.(TEXT_ANIM_SHADOW_DEEP_VAR, `${shadowDeepPx}px`);
+    el.style?.setProperty?.(TEXT_ANIM_SHIFT_VAR, `${shiftPx}px`);
+    el.style?.setProperty?.(TEXT_ANIM_SHIFT_NEG_VAR, shiftPx ? `-${shiftPx}px` : '0px');
+    el.style?.setProperty?.(TEXT_ANIM_SHIFT_SOFT_VAR, `${shiftSoftPx}px`);
+    el.style?.setProperty?.(TEXT_ANIM_SHIFT_SOFT_NEG_VAR, shiftSoftPx ? `-${shiftSoftPx}px` : '0px');
+    el.style?.setProperty?.(TEXT_ANIM_DIM_VAR, String(Math.round(dim * 1000) / 1000));
+    el.style?.setProperty?.(TEXT_ANIM_VEIL_VAR, String(Math.round(veil * 1000) / 1000));
+}
+
+function isNestedTextAnimationDialogue(el) {
+    if (!el || !(el instanceof HTMLElement)) return false;
+    const parentDialogue = el.parentElement?.closest?.(TEXT_ANIM_DIALOGUE_SELECTOR);
+    return Boolean(parentDialogue && parentDialogue !== el);
+}
+
+function collectDialogueTextAnimationTargets(messageTextEl) {
+    if (!messageTextEl || !(messageTextEl instanceof HTMLElement)) return [];
+    return Array.from(messageTextEl.querySelectorAll(TEXT_ANIM_DIALOGUE_SELECTOR))
+        .filter((el) => el instanceof HTMLElement && !isNestedTextAnimationDialogue(el));
+}
+
+function isInsideAnyElement(node, elements) {
+    return elements.some((el) => el instanceof HTMLElement && el.contains(node));
+}
+
+function isEligibleTextAnimationBodyWrapper(el, blockTargets) {
+    if (!el || !(el instanceof HTMLElement)) return false;
+    if (!el.hasAttribute(TEXT_ANIM_BODY_WRAP_ATTR)) return false;
+    if (!String(el.textContent || '').trim()) return false;
+    if (el.closest(TEXT_ANIM_DIALOGUE_SELECTOR)) return false;
+    if (el.closest(TEXT_ANIM_SKIP_SELECTOR)) return false;
+    return !isInsideAnyElement(el, blockTargets);
+}
+
+function wrapBodyTextAnimationTextNode(textNode) {
+    if (!textNode?.parentNode) return null;
+    const wrapper = document.createElement('span');
+    wrapper.setAttribute(TEXT_ANIM_BODY_WRAP_ATTR, '1');
+    textNode.parentNode.replaceChild(wrapper, textNode);
+    wrapper.appendChild(textNode);
+    return wrapper;
+}
+
+function collectBodyTextAnimationInlineTargets(messageTextEl, blockTargets) {
+    if (!messageTextEl || !(messageTextEl instanceof HTMLElement)) return [];
+
+    const targets = Array.from(messageTextEl.querySelectorAll(`[${TEXT_ANIM_BODY_WRAP_ATTR}]`))
+        .filter((el) => isEligibleTextAnimationBodyWrapper(el, blockTargets));
+
+    const textNodes = [];
+    const walker = document.createTreeWalker(messageTextEl, NodeFilter.SHOW_TEXT, {
+        acceptNode(node) {
+            if (!node || !String(node.nodeValue || '').trim()) return NodeFilter.FILTER_REJECT;
+
+            const parent = node.parentElement;
+            if (!parent) return NodeFilter.FILTER_REJECT;
+            if (parent.closest(`[${TEXT_ANIM_BODY_WRAP_ATTR}]`)) return NodeFilter.FILTER_REJECT;
+            if (parent.closest(TEXT_ANIM_DIALOGUE_SELECTOR)) return NodeFilter.FILTER_REJECT;
+            if (parent.closest(TEXT_ANIM_SKIP_SELECTOR)) return NodeFilter.FILTER_REJECT;
+            if (isInsideAnyElement(node, blockTargets)) return NodeFilter.FILTER_REJECT;
+
+            return NodeFilter.FILTER_ACCEPT;
+        },
+    });
+
+    let node = walker.nextNode();
+    while (node) {
+        textNodes.push(node);
+        node = walker.nextNode();
+    }
+
+    for (const textNode of textNodes) {
+        const wrapper = wrapBodyTextAnimationTextNode(textNode);
+        if (wrapper) targets.push(wrapper);
+    }
+
+    return targets;
+}
+
+function collectBodyTextAnimationTargets(messageTextEl) {
+    if (!messageTextEl || !(messageTextEl instanceof HTMLElement)) return [];
+    const blockTargets = Array.from(messageTextEl.querySelectorAll(TEXT_ANIM_BODY_BLOCK_SELECTOR))
+        .filter((el) => {
+            if (!(el instanceof HTMLElement)) return false;
+            if (el.matches(TEXT_ANIM_DIALOGUE_SELECTOR)) return false;
+            if (el.closest(TEXT_ANIM_DIALOGUE_SELECTOR)) return false;
+            if (el.matches(TEXT_ANIM_SKIP_SELECTOR)) return false;
+            if (el.querySelector(TEXT_ANIM_DIALOGUE_SELECTOR)) return false;
+            return Boolean(String(el.textContent || '').trim());
+        });
+
+    const inlineTargets = collectBodyTextAnimationInlineTargets(messageTextEl, blockTargets);
+    if (blockTargets.length || inlineTargets.length) return [...blockTargets, ...inlineTargets];
+
+    return messageTextEl.querySelector(TEXT_ANIM_DIALOGUE_SELECTOR)
+        ? []
+        : (String(messageTextEl.textContent || '').trim() ? [messageTextEl] : []);
+}
+
+function syncTextAnimationTargets() {
+    const bodyConfig = getResolvedTextAnimationConfig('body');
+    const dialogueConfig = getResolvedTextAnimationConfig('dialogue');
+    const enabled = settings.fontsEnabled
+        && settings.textAnimEnabled === true
+        && (isTextAnimationConfigActive(bodyConfig) || isTextAnimationConfigActive(dialogueConfig));
+
+    const marked = Array.from(document.querySelectorAll(`#chat [${TEXT_ANIM_ATTR}]`))
+        .filter((el) => el instanceof HTMLElement);
+
+    if (!enabled) {
+        marked.forEach((el) => clearTextAnimationTarget(el, { unwrapBodyWrapper: true }));
+        cleanupTextAnimationBodyWrappers(document.getElementById('chat') || document);
+        return;
+    }
+
+    const activeId = getActiveStreamingMessageId();
+    const candidates = Array.from(document.querySelectorAll(`#chat .mes:not(.${STREAMING_MESSAGE_CLASS}) .mes_text:not(.${STREAM_BUFFER_CLASS})`))
+        .filter((el) => {
+            if (!(el instanceof HTMLElement)) return false;
+            const messageEl = el.closest?.('.mes');
+            if (activeId && messageEl?.getAttribute?.('mesid') === activeId) return false;
+            return Boolean(String(el.textContent || '').trim());
+        });
+
+    const activeMessageTextEls = candidates.slice(-TEXT_ANIM_MAX_ACTIVE);
+    const activeTargets = new Set();
+    for (const messageTextEl of activeMessageTextEls) {
+        const dialogueTargets = isTextAnimationConfigActive(dialogueConfig)
+            ? collectDialogueTextAnimationTargets(messageTextEl)
+            : [];
+        const bodyTargets = isTextAnimationConfigActive(bodyConfig)
+            ? collectBodyTextAnimationTargets(messageTextEl)
+            : [];
+
+        bodyTargets.forEach((el) => activeTargets.add(el));
+        dialogueTargets.forEach((el) => activeTargets.add(el));
+    }
+
+    marked.forEach((el) => {
+        if (!activeTargets.has(el)) clearTextAnimationTarget(el, { unwrapBodyWrapper: true });
+    });
+    for (const messageTextEl of activeMessageTextEls) {
+        if (isTextAnimationConfigActive(bodyConfig)) {
+            collectBodyTextAnimationTargets(messageTextEl)
+                .forEach((el) => applyTextAnimationTarget(el, bodyConfig));
+        }
+        if (isTextAnimationConfigActive(dialogueConfig)) {
+            collectDialogueTextAnimationTargets(messageTextEl)
+                .forEach((el) => applyTextAnimationTarget(el, dialogueConfig));
+        }
+    }
 }
 
 function findStreamingSourceMesText(messageEl) {
@@ -1695,7 +2139,7 @@ function scanAndProcess() {
         }
     });
 
-    if (settings.fontsEnabled && String(settings.dialogueFont || '').trim()) {
+    if (shouldProcessDialogueMarkup()) {
         document.querySelectorAll(`#chat .mes_text:not(.${STREAM_BUFFER_CLASS})`).forEach((el) => containers.add(el));
     }
 
@@ -1715,6 +2159,7 @@ function scanAndProcess() {
     }
 
     containers.forEach(processContainer);
+    syncTextAnimationTargets();
 }
 
 /** @type {Set<HTMLElement>} */
