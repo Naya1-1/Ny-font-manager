@@ -1748,6 +1748,10 @@
     margin: 0 0 0.6em;
 }
 
+.nytw-reading-preview-italic {
+    color: var(--SmartThemeEmColor);
+}
+
 .nytw-reading-preview-dialogue {
     display: inline-block;
 }

@@ -147,57 +147,143 @@ function removeReadingStyleElement() {
     document.getElementById(READING_STYLE_ID)?.remove();
 }
 
+function getNormalizedTypographyValues() {
+    return {
+        overallFontSize: clampOptionalFontSize(settings.overallFontSize),
+        overallLetterSpacing: clampOptionalLetterSpacing(settings.overallLetterSpacing),
+        overallLineHeight: clampOptionalLineHeight(settings.overallLineHeight),
+        overallTextColor: normalizeOptionalCssColor(settings.overallTextColor),
+        italicTextColor: normalizeOptionalCssColor(settings.italicTextColor),
+        overallParagraphSpacing: clampOptionalParagraphSpacing(settings.overallParagraphSpacing),
+        overallTextIndent: clampOptionalTextIndent(settings.overallTextIndent),
+        overallFontWeight: normalizeOptionalFontWeight(settings.overallFontWeight),
+        overallFontStyle: normalizeOptionalFontStyle(settings.overallFontStyle),
+        bodyFontSize: clampOptionalFontSize(settings.bodyFontSize),
+        bodyLetterSpacing: clampOptionalLetterSpacing(settings.bodyLetterSpacing),
+        bodyLineHeight: clampOptionalLineHeight(settings.lineHeight),
+        bodyTextColor: normalizeOptionalCssColor(settings.bodyTextColor),
+        bodyParagraphSpacing: clampOptionalParagraphSpacing(settings.bodyParagraphSpacing),
+        bodyTextIndent: clampOptionalTextIndent(settings.bodyTextIndent),
+        bodyFontWeight: normalizeOptionalFontWeight(settings.bodyFontWeight),
+        bodyFontStyle: normalizeOptionalFontStyle(settings.bodyFontStyle),
+        dialogueFontSize: clampOptionalFontSize(settings.dialogueFontSize),
+        dialogueLetterSpacing: clampOptionalLetterSpacing(settings.dialogueLetterSpacing),
+        dialogueLineHeight: clampOptionalLineHeight(settings.dialogueLineHeight),
+        dialogueTextColor: normalizeOptionalCssColor(settings.dialogueTextColor),
+        dialogueParagraphSpacing: clampOptionalParagraphSpacing(settings.dialogueParagraphSpacing),
+        dialogueTextIndent: clampOptionalTextIndent(settings.dialogueTextIndent),
+        dialogueFontWeight: normalizeOptionalFontWeight(settings.dialogueFontWeight),
+        dialogueFontStyle: normalizeOptionalFontStyle(settings.dialogueFontStyle),
+        customFontSize: clampOptionalFontSize(settings.customFontSize),
+        customLetterSpacing: clampOptionalLetterSpacing(settings.customLetterSpacing),
+        localeFontSize: clampOptionalFontSize(settings.localeFontSize),
+        localeLetterSpacing: clampOptionalLetterSpacing(settings.localeLetterSpacing),
+    };
+}
+
+function hasReadingStyleValue(value) {
+    return value !== null && value !== undefined && String(value).trim() !== '';
+}
+
+function hasAnyReadingStyleValue(values, keys) {
+    return keys.some((key) => hasReadingStyleValue(values[key]));
+}
+
+function cssVarChain(varNames) {
+    return varNames.reduceRight((fallback, name) => (
+        fallback ? `var(${name},${fallback})` : `var(${name})`
+    ), '');
+}
+
+function pushReadingDeclaration(declarations, values, keys, property, varNames) {
+    if (!hasAnyReadingStyleValue(values, keys)) return;
+    declarations.push(`${property}:${cssVarChain(varNames)} !important;`);
+}
+
+function pushReadingRule(css, selectors, declarations) {
+    if (!declarations.length) return;
+    css.push(`\n${selectors.join(',')}{`, ...declarations, '}');
+}
+
 function buildReadingStyleCss() {
-    return [
-        '/* NyTW Reading Style (generated) */',
-        '\n#chat .mes_text,',
-        '#chat .mes_text i,',
-        '#chat .mes_text em,',
-        '#chat .mes_text u,',
+    const values = getNormalizedTypographyValues();
+    const css = ['/* NyTW Reading Style (generated) */'];
+
+    const bodyDeclarations = [];
+    pushReadingDeclaration(bodyDeclarations, values, ['bodyFontSize', 'overallFontSize'], 'font-size', ['--nytw-body-font-size', '--nytw-overall-font-size']);
+    pushReadingDeclaration(bodyDeclarations, values, ['bodyLetterSpacing', 'overallLetterSpacing'], 'letter-spacing', ['--nytw-body-letter-spacing', '--nytw-overall-letter-spacing']);
+    pushReadingDeclaration(bodyDeclarations, values, ['bodyLineHeight', 'overallLineHeight'], 'line-height', ['--nytw-body-line-height', '--nytw-overall-line-height']);
+    pushReadingDeclaration(bodyDeclarations, values, ['bodyTextIndent', 'overallTextIndent'], 'text-indent', ['--nytw-body-text-indent', '--nytw-overall-text-indent']);
+    pushReadingDeclaration(bodyDeclarations, values, ['bodyFontWeight', 'overallFontWeight'], 'font-weight', ['--nytw-body-font-weight', '--nytw-overall-font-weight']);
+    pushReadingDeclaration(bodyDeclarations, values, ['bodyFontStyle', 'overallFontStyle'], 'font-style', ['--nytw-body-font-style', '--nytw-overall-font-style']);
+    pushReadingRule(css, [
+        '#chat .mes_text',
+        '#chat .mes_text i',
+        '#chat .mes_text em',
+        '#chat .mes_text u',
         '#chat .mes_text strong',
-        '{',
-        'font-size:var(--nytw-body-font-size,var(--nytw-overall-font-size)) !important;',
-        'letter-spacing:var(--nytw-body-letter-spacing,var(--nytw-overall-letter-spacing)) !important;',
-        'line-height:var(--nytw-body-line-height,var(--nytw-overall-line-height)) !important;',
-        'color:var(--nytw-body-text-color,var(--nytw-overall-text-color)) !important;',
-        'text-indent:var(--nytw-body-text-indent,var(--nytw-overall-text-indent)) !important;',
-        'font-weight:var(--nytw-body-font-weight,var(--nytw-overall-font-weight)) !important;',
-        'font-style:var(--nytw-body-font-style,var(--nytw-overall-font-style)) !important;',
-        '}',
-        '\n#chat .mes_text p,#chat .mes_text li,#chat .mes_text blockquote{',
-        'margin-top:var(--nytw-body-paragraph-spacing,var(--nytw-overall-paragraph-spacing)) !important;',
-        'margin-bottom:var(--nytw-body-paragraph-spacing,var(--nytw-overall-paragraph-spacing)) !important;',
-        'text-indent:var(--nytw-body-text-indent,var(--nytw-overall-text-indent)) !important;',
-        '}',
-        '\n#chat .mes_text .Ny-font-manager,',
-        '#chat .mes_text .custom-Ny-font-manager,',
-        '#chat .mes_text .ny-dialogue,',
-        '#chat .mes_text .custom-ny-dialogue,',
+    ], bodyDeclarations);
+
+    const bodyColorDeclarations = [];
+    pushReadingDeclaration(bodyColorDeclarations, values, ['bodyTextColor', 'overallTextColor'], 'color', ['--nytw-body-text-color', '--nytw-overall-text-color']);
+    pushReadingRule(css, ['#chat .mes_text'], bodyColorDeclarations);
+
+    const italicDeclarations = [];
+    pushReadingDeclaration(italicDeclarations, values, ['italicTextColor', 'bodyTextColor', 'overallTextColor'], 'color', ['--nytw-italic-text-color', '--nytw-body-text-color', '--nytw-overall-text-color']);
+    pushReadingRule(css, ['#chat .mes_text i', '#chat .mes_text em'], italicDeclarations);
+    if (italicDeclarations.length) {
+        pushReadingRule(css, ['#chat .mes_text q i', '#chat .mes_text q em'], ['color:inherit !important;']);
+    }
+
+    const bodyBlockDeclarations = [];
+    pushReadingDeclaration(bodyBlockDeclarations, values, ['bodyParagraphSpacing', 'overallParagraphSpacing'], 'margin-top', ['--nytw-body-paragraph-spacing', '--nytw-overall-paragraph-spacing']);
+    pushReadingDeclaration(bodyBlockDeclarations, values, ['bodyParagraphSpacing', 'overallParagraphSpacing'], 'margin-bottom', ['--nytw-body-paragraph-spacing', '--nytw-overall-paragraph-spacing']);
+    pushReadingDeclaration(bodyBlockDeclarations, values, ['bodyTextIndent', 'overallTextIndent'], 'text-indent', ['--nytw-body-text-indent', '--nytw-overall-text-indent']);
+    pushReadingRule(css, ['#chat .mes_text p', '#chat .mes_text li', '#chat .mes_text blockquote'], bodyBlockDeclarations);
+
+    const dialogueDeclarations = [];
+    pushReadingDeclaration(dialogueDeclarations, values, ['dialogueFontSize', 'bodyFontSize', 'overallFontSize'], 'font-size', ['--nytw-dialogue-font-size', '--nytw-body-font-size', '--nytw-overall-font-size']);
+    pushReadingDeclaration(dialogueDeclarations, values, ['dialogueLetterSpacing', 'bodyLetterSpacing', 'overallLetterSpacing'], 'letter-spacing', ['--nytw-dialogue-letter-spacing', '--nytw-body-letter-spacing', '--nytw-overall-letter-spacing']);
+    pushReadingDeclaration(dialogueDeclarations, values, ['dialogueLineHeight', 'bodyLineHeight', 'overallLineHeight'], 'line-height', ['--nytw-dialogue-line-height', '--nytw-body-line-height', '--nytw-overall-line-height']);
+    pushReadingDeclaration(dialogueDeclarations, values, ['dialogueTextColor', 'bodyTextColor', 'overallTextColor'], 'color', ['--nytw-dialogue-text-color', '--nytw-body-text-color', '--nytw-overall-text-color']);
+    pushReadingDeclaration(dialogueDeclarations, values, ['dialogueTextIndent', 'bodyTextIndent', 'overallTextIndent'], 'text-indent', ['--nytw-dialogue-text-indent', '--nytw-body-text-indent', '--nytw-overall-text-indent']);
+    pushReadingDeclaration(dialogueDeclarations, values, ['dialogueTextIndent', 'bodyTextIndent', 'overallTextIndent'], 'padding-left', ['--nytw-dialogue-text-indent', '--nytw-body-text-indent', '--nytw-overall-text-indent']);
+    pushReadingDeclaration(dialogueDeclarations, values, ['dialogueFontWeight', 'bodyFontWeight', 'overallFontWeight'], 'font-weight', ['--nytw-dialogue-font-weight', '--nytw-body-font-weight', '--nytw-overall-font-weight']);
+    pushReadingDeclaration(dialogueDeclarations, values, ['dialogueFontStyle', 'bodyFontStyle', 'overallFontStyle'], 'font-style', ['--nytw-dialogue-font-style', '--nytw-body-font-style', '--nytw-overall-font-style']);
+    pushReadingRule(css, [
+        '#chat .mes_text .Ny-font-manager',
+        '#chat .mes_text .custom-Ny-font-manager',
+        '#chat .mes_text .ny-dialogue',
+        '#chat .mes_text .custom-ny-dialogue',
         '#chat .mes_text q',
-        '{font-size:var(--nytw-dialogue-font-size,var(--nytw-body-font-size,var(--nytw-overall-font-size))) !important;',
-        'letter-spacing:var(--nytw-dialogue-letter-spacing,var(--nytw-body-letter-spacing,var(--nytw-overall-letter-spacing))) !important;',
-        'line-height:var(--nytw-dialogue-line-height,var(--nytw-body-line-height,var(--nytw-overall-line-height))) !important;',
-        'color:var(--nytw-dialogue-text-color,var(--nytw-body-text-color,var(--nytw-overall-text-color))) !important;',
-        'text-indent:var(--nytw-dialogue-text-indent,var(--nytw-body-text-indent,var(--nytw-overall-text-indent))) !important;',
-        'padding-left:var(--nytw-dialogue-text-indent,var(--nytw-body-text-indent,var(--nytw-overall-text-indent))) !important;',
-        'font-weight:var(--nytw-dialogue-font-weight,var(--nytw-body-font-weight,var(--nytw-overall-font-weight))) !important;',
-        'font-style:var(--nytw-dialogue-font-style,var(--nytw-body-font-style,var(--nytw-overall-font-style))) !important;}',
-        '\n#chat .mes_text .Ny-font-manager *,',
-        '#chat .mes_text .custom-Ny-font-manager *,',
-        '#chat .mes_text .ny-dialogue *,',
-        '#chat .mes_text .custom-ny-dialogue *,',
+    ], dialogueDeclarations);
+
+    const dialogueDescendantDeclarations = [];
+    pushReadingDeclaration(dialogueDescendantDeclarations, values, ['dialogueFontSize', 'bodyFontSize', 'overallFontSize'], 'font-size', ['--nytw-dialogue-font-size', '--nytw-body-font-size', '--nytw-overall-font-size']);
+    pushReadingDeclaration(dialogueDescendantDeclarations, values, ['dialogueLetterSpacing', 'bodyLetterSpacing', 'overallLetterSpacing'], 'letter-spacing', ['--nytw-dialogue-letter-spacing', '--nytw-body-letter-spacing', '--nytw-overall-letter-spacing']);
+    pushReadingDeclaration(dialogueDescendantDeclarations, values, ['dialogueLineHeight', 'bodyLineHeight', 'overallLineHeight'], 'line-height', ['--nytw-dialogue-line-height', '--nytw-body-line-height', '--nytw-overall-line-height']);
+    pushReadingDeclaration(dialogueDescendantDeclarations, values, ['dialogueFontWeight', 'bodyFontWeight', 'overallFontWeight'], 'font-weight', ['--nytw-dialogue-font-weight', '--nytw-body-font-weight', '--nytw-overall-font-weight']);
+    pushReadingDeclaration(dialogueDescendantDeclarations, values, ['dialogueFontStyle', 'bodyFontStyle', 'overallFontStyle'], 'font-style', ['--nytw-dialogue-font-style', '--nytw-body-font-style', '--nytw-overall-font-style']);
+    pushReadingRule(css, [
+        '#chat .mes_text .Ny-font-manager *',
+        '#chat .mes_text .custom-Ny-font-manager *',
+        '#chat .mes_text .ny-dialogue *',
+        '#chat .mes_text .custom-ny-dialogue *',
         '#chat .mes_text q *',
-        '{font-size:var(--nytw-dialogue-font-size,var(--nytw-body-font-size,var(--nytw-overall-font-size))) !important;',
-        'letter-spacing:var(--nytw-dialogue-letter-spacing,var(--nytw-body-letter-spacing,var(--nytw-overall-letter-spacing))) !important;',
-        'line-height:var(--nytw-dialogue-line-height,var(--nytw-body-line-height,var(--nytw-overall-line-height))) !important;',
-        'color:var(--nytw-dialogue-text-color,var(--nytw-body-text-color,var(--nytw-overall-text-color))) !important;',
-        'font-weight:var(--nytw-dialogue-font-weight,var(--nytw-body-font-weight,var(--nytw-overall-font-weight))) !important;',
-        'font-style:var(--nytw-dialogue-font-style,var(--nytw-body-font-style,var(--nytw-overall-font-style))) !important;}',
-        '\n#chat .mes_text .Ny-font-manager p,#chat .mes_text .custom-Ny-font-manager p,#chat .mes_text .ny-dialogue p,#chat .mes_text .custom-ny-dialogue p{',
-        'margin-top:var(--nytw-dialogue-paragraph-spacing,var(--nytw-body-paragraph-spacing,var(--nytw-overall-paragraph-spacing))) !important;',
-        'margin-bottom:var(--nytw-dialogue-paragraph-spacing,var(--nytw-body-paragraph-spacing,var(--nytw-overall-paragraph-spacing))) !important;',
-        'text-indent:var(--nytw-dialogue-text-indent,var(--nytw-body-text-indent,var(--nytw-overall-text-indent))) !important;}',
-    ].join('');
+    ], dialogueDescendantDeclarations);
+
+    const dialogueBlockDeclarations = [];
+    pushReadingDeclaration(dialogueBlockDeclarations, values, ['dialogueParagraphSpacing', 'bodyParagraphSpacing', 'overallParagraphSpacing'], 'margin-top', ['--nytw-dialogue-paragraph-spacing', '--nytw-body-paragraph-spacing', '--nytw-overall-paragraph-spacing']);
+    pushReadingDeclaration(dialogueBlockDeclarations, values, ['dialogueParagraphSpacing', 'bodyParagraphSpacing', 'overallParagraphSpacing'], 'margin-bottom', ['--nytw-dialogue-paragraph-spacing', '--nytw-body-paragraph-spacing', '--nytw-overall-paragraph-spacing']);
+    pushReadingDeclaration(dialogueBlockDeclarations, values, ['dialogueTextIndent', 'bodyTextIndent', 'overallTextIndent'], 'text-indent', ['--nytw-dialogue-text-indent', '--nytw-body-text-indent', '--nytw-overall-text-indent']);
+    pushReadingRule(css, [
+        '#chat .mes_text .Ny-font-manager p',
+        '#chat .mes_text .custom-Ny-font-manager p',
+        '#chat .mes_text .ny-dialogue p',
+        '#chat .mes_text .custom-ny-dialogue p',
+    ], dialogueBlockDeclarations);
+
+    return css.join('');
 }
 
 function applyReadingStyleRules() {
@@ -221,6 +307,7 @@ function clearTypographyVariables(chatEl) {
     chatEl.style.removeProperty('--nytw-body-letter-spacing');
     chatEl.style.removeProperty('--nytw-body-line-height');
     chatEl.style.removeProperty('--nytw-body-text-color');
+    chatEl.style.removeProperty('--nytw-italic-text-color');
     chatEl.style.removeProperty('--nytw-body-paragraph-spacing');
     chatEl.style.removeProperty('--nytw-body-text-indent');
     chatEl.style.removeProperty('--nytw-body-font-weight');
@@ -260,39 +347,43 @@ function applyTypographyVariables() {
     applyReadingStyleRules();
     if (!chatEl) return;
 
-    const overallFontSize = clampOptionalFontSize(settings.overallFontSize);
-    const overallLetterSpacing = clampOptionalLetterSpacing(settings.overallLetterSpacing);
-    const overallLineHeight = clampOptionalLineHeight(settings.overallLineHeight);
-    const overallTextColor = normalizeOptionalCssColor(settings.overallTextColor);
-    const overallParagraphSpacing = clampOptionalParagraphSpacing(settings.overallParagraphSpacing);
-    const overallTextIndent = clampOptionalTextIndent(settings.overallTextIndent);
-    const overallFontWeight = normalizeOptionalFontWeight(settings.overallFontWeight);
-    const overallFontStyle = normalizeOptionalFontStyle(settings.overallFontStyle);
-    const bodyFontSize = clampOptionalFontSize(settings.bodyFontSize);
-    const bodyLetterSpacing = clampOptionalLetterSpacing(settings.bodyLetterSpacing);
-    const bodyLineHeight = clampOptionalLineHeight(settings.lineHeight);
-    const bodyTextColor = normalizeOptionalCssColor(settings.bodyTextColor);
-    const bodyParagraphSpacing = clampOptionalParagraphSpacing(settings.bodyParagraphSpacing);
-    const bodyTextIndent = clampOptionalTextIndent(settings.bodyTextIndent);
-    const bodyFontWeight = normalizeOptionalFontWeight(settings.bodyFontWeight);
-    const bodyFontStyle = normalizeOptionalFontStyle(settings.bodyFontStyle);
-    const dialogueFontSize = clampOptionalFontSize(settings.dialogueFontSize);
-    const dialogueLetterSpacing = clampOptionalLetterSpacing(settings.dialogueLetterSpacing);
-    const dialogueLineHeight = clampOptionalLineHeight(settings.dialogueLineHeight);
-    const dialogueTextColor = normalizeOptionalCssColor(settings.dialogueTextColor);
-    const dialogueParagraphSpacing = clampOptionalParagraphSpacing(settings.dialogueParagraphSpacing);
-    const dialogueTextIndent = clampOptionalTextIndent(settings.dialogueTextIndent);
-    const dialogueFontWeight = normalizeOptionalFontWeight(settings.dialogueFontWeight);
-    const dialogueFontStyle = normalizeOptionalFontStyle(settings.dialogueFontStyle);
-    const customFontSize = clampOptionalFontSize(settings.customFontSize);
-    const customLetterSpacing = clampOptionalLetterSpacing(settings.customLetterSpacing);
-    const localeFontSize = clampOptionalFontSize(settings.localeFontSize);
-    const localeLetterSpacing = clampOptionalLetterSpacing(settings.localeLetterSpacing);
+    const {
+        overallFontSize,
+        overallLetterSpacing,
+        overallLineHeight,
+        overallTextColor,
+        italicTextColor,
+        overallParagraphSpacing,
+        overallTextIndent,
+        overallFontWeight,
+        overallFontStyle,
+        bodyFontSize,
+        bodyLetterSpacing,
+        bodyLineHeight,
+        bodyTextColor,
+        bodyParagraphSpacing,
+        bodyTextIndent,
+        bodyFontWeight,
+        bodyFontStyle,
+        dialogueFontSize,
+        dialogueLetterSpacing,
+        dialogueLineHeight,
+        dialogueTextColor,
+        dialogueParagraphSpacing,
+        dialogueTextIndent,
+        dialogueFontWeight,
+        dialogueFontStyle,
+        customFontSize,
+        customLetterSpacing,
+        localeFontSize,
+        localeLetterSpacing,
+    } = getNormalizedTypographyValues();
 
     setOrRemoveCssVar(chatEl, '--nytw-overall-font-size', overallFontSize === null ? '' : `${overallFontSize}px`);
     setOrRemoveCssVar(chatEl, '--nytw-overall-letter-spacing', overallLetterSpacing === null ? '' : `${overallLetterSpacing}em`);
     setOrRemoveCssVar(chatEl, '--nytw-overall-line-height', overallLineHeight === null ? '' : String(overallLineHeight));
     setOrRemoveCssVar(chatEl, '--nytw-overall-text-color', overallTextColor);
+    setOrRemoveCssVar(chatEl, '--nytw-italic-text-color', italicTextColor);
     setOrRemoveCssVar(chatEl, '--nytw-overall-paragraph-spacing', overallParagraphSpacing === null ? '' : `${overallParagraphSpacing}em`);
     setOrRemoveCssVar(chatEl, '--nytw-overall-text-indent', overallTextIndent === null ? '' : `${overallTextIndent}em`);
     setOrRemoveCssVar(chatEl, '--nytw-overall-font-weight', overallFontWeight);

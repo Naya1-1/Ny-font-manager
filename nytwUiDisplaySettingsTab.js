@@ -25,7 +25,8 @@ import {
 } from './nytwState.js';
 
 const READING_STYLE_PRESET_SCHEMA = 'Ny-font-manager.reading-style-preset';
-const READING_STYLE_PRESET_VERSION = 1;
+const READING_STYLE_PRESET_VERSION = 2;
+const READING_COLOR_PICKER_FALLBACK = '#ffffff';
 
 const READING_STYLE_KEYS = [
     'readingStyleEnabled',
@@ -33,6 +34,7 @@ const READING_STYLE_KEYS = [
     'overallLetterSpacing',
     'overallLineHeight',
     'overallTextColor',
+    'italicTextColor',
     'overallParagraphSpacing',
     'overallTextIndent',
     'overallFontWeight',
@@ -135,6 +137,9 @@ function normalizeReadingStylePreset(raw) {
         hasAny = true;
     }
     if (!hasAny) return null;
+    if (!Object.prototype.hasOwnProperty.call(style, 'italicTextColor')) {
+        style.italicTextColor = '';
+    }
     const now = new Date().toISOString();
     const name = String(raw.name || '阅读样式预设').trim().slice(0, 80) || '阅读样式预设';
     return {
@@ -234,7 +239,7 @@ export function initDisplaySettingsTab() {
                 </div>
 
                 <div class="nytw-reading-preview" id="nytw_reading_preview">
-                    <p class="nytw-reading-preview-body">这是一段正文，用来预览字号、颜色、段距和缩进。</p>
+                    <p class="nytw-reading-preview-body">这是一段正文，包含 <em class="nytw-reading-preview-italic">斜体</em> 示例，用来预览字号、颜色、段距和缩进。</p>
                     <q class="nytw-reading-preview-dialogue ny-dialogue">这是一句对话，用来预览对话层覆盖效果。</q>
                 </div>
 
@@ -279,9 +284,10 @@ export function initDisplaySettingsTab() {
                 `)}
 
                 ${renderReadingSubcard('fa-solid fa-palette', '颜色', `
-                    <div class="nytw-style-grid nytw-style-grid--color" data-color-row="overall"><div class="nytw-typo-type"><i class="fa-solid fa-layer-group"></i> 整体</div><input id="nytw_overall_text_color_picker" class="nytw-color-picker" type="color" value="#ffffff" /><input id="nytw_overall_text_color" class="text_pole nytw-reader-text-input" type="text" placeholder="继承 / #ffffff" /></div>
-                    <div class="nytw-style-grid nytw-style-grid--color" data-color-row="body"><div class="nytw-typo-type"><i class="fa-solid fa-align-left"></i> 正文</div><input id="nytw_body_text_color_picker" class="nytw-color-picker" type="color" value="#ffffff" /><input id="nytw_body_text_color" class="text_pole nytw-reader-text-input" type="text" placeholder="继承 / #ffffff" /></div>
-                    <div class="nytw-style-grid nytw-style-grid--color" data-color-row="dialogue"><div class="nytw-typo-type"><i class="fa-solid fa-quote-left"></i> 对话</div><input id="nytw_dialogue_text_color_picker" class="nytw-color-picker" type="color" value="#ffffff" /><input id="nytw_dialogue_text_color" class="text_pole nytw-reader-text-input" type="text" placeholder="继承 / #ffffff" /></div>
+                    <div class="nytw-style-grid nytw-style-grid--color" data-color-row="overall"><div class="nytw-typo-type"><i class="fa-solid fa-layer-group"></i> 整体</div><input id="nytw_overall_text_color_picker" class="nytw-color-picker" type="color" value="${READING_COLOR_PICKER_FALLBACK}" /><input id="nytw_overall_text_color" class="text_pole nytw-reader-text-input" type="text" placeholder="继承" /></div>
+                    <div class="nytw-style-grid nytw-style-grid--color" data-color-row="body"><div class="nytw-typo-type"><i class="fa-solid fa-align-left"></i> 正文</div><input id="nytw_body_text_color_picker" class="nytw-color-picker" type="color" value="${READING_COLOR_PICKER_FALLBACK}" /><input id="nytw_body_text_color" class="text_pole nytw-reader-text-input" type="text" placeholder="继承" /></div>
+                    <div class="nytw-style-grid nytw-style-grid--color" data-color-row="italic"><div class="nytw-typo-type"><i class="fa-solid fa-italic"></i> 斜体</div><input id="nytw_italic_text_color_picker" class="nytw-color-picker" type="color" value="${READING_COLOR_PICKER_FALLBACK}" /><input id="nytw_italic_text_color" class="text_pole nytw-reader-text-input" type="text" placeholder="继承" /></div>
+                    <div class="nytw-style-grid nytw-style-grid--color" data-color-row="dialogue"><div class="nytw-typo-type"><i class="fa-solid fa-quote-left"></i> 对话</div><input id="nytw_dialogue_text_color_picker" class="nytw-color-picker" type="color" value="${READING_COLOR_PICKER_FALLBACK}" /><input id="nytw_dialogue_text_color" class="text_pole nytw-reader-text-input" type="text" placeholder="继承" /></div>
                 `)}
 
                 ${renderReadingSubcard('fa-solid fa-paragraph', '段落 / 缩进', `
@@ -486,6 +492,8 @@ export function initDisplaySettingsTab() {
     const overallTextColorPickerEl = document.getElementById('nytw_overall_text_color_picker');
     const bodyTextColorEl = document.getElementById('nytw_body_text_color');
     const bodyTextColorPickerEl = document.getElementById('nytw_body_text_color_picker');
+    const italicTextColorEl = document.getElementById('nytw_italic_text_color');
+    const italicTextColorPickerEl = document.getElementById('nytw_italic_text_color_picker');
     const dialogueTextColorEl = document.getElementById('nytw_dialogue_text_color');
     const dialogueTextColorPickerEl = document.getElementById('nytw_dialogue_text_color_picker');
     const overallParagraphSpacingEl = document.getElementById('nytw_overall_paragraph_spacing');
@@ -621,6 +629,7 @@ export function initDisplaySettingsTab() {
         applyTypographyVariables();
         syncReadingStylePreview();
         syncTypographyPlaceholders();
+        syncReadingColorControls();
     }, 200);
 
     const bindOptionalNumberInput = (inputEl, getValue, setValue, clampFn) => {
@@ -654,48 +663,68 @@ export function initDisplaySettingsTab() {
         selectEl.value = String(value ?? '');
     };
 
-    const colorTextToPickerValue = (value) => {
-        const raw = normalizeOptionalCssColor(value);
-        if (/^#[0-9a-fA-F]{6}$/.test(raw)) return raw;
-        if (/^#[0-9a-fA-F]{3}$/.test(raw)) {
-            return `#${raw[1]}${raw[1]}${raw[2]}${raw[2]}${raw[3]}${raw[3]}`;
-        }
-        if (/^#[0-9a-fA-F]{8}$/.test(raw)) return raw.slice(0, 7);
-        return '#ffffff';
-    };
-
     const byteToHex = (value) => {
         const byte = Math.min(255, Math.max(0, Math.round(Number(value) || 0)));
         return byte.toString(16).padStart(2, '0');
+    };
+
+    const channelToByte = (value) => {
+        const raw = String(value ?? '').trim();
+        const number = Number.parseFloat(raw);
+        if (!Number.isFinite(number)) return 0;
+        return raw.endsWith('%') ? number * 2.55 : number;
+    };
+
+    const normalizeHexColor = (value) => {
+        const raw = String(value ?? '').trim();
+        if (/^#[0-9a-fA-F]{6}$/.test(raw)) return raw.toLowerCase();
+        if (/^#[0-9a-fA-F]{3}$/.test(raw)) {
+            return `#${raw[1]}${raw[1]}${raw[2]}${raw[2]}${raw[3]}${raw[3]}`.toLowerCase();
+        }
+        if (/^#[0-9a-fA-F]{8}$/.test(raw)) return raw.slice(0, 7).toLowerCase();
+        if (/^#[0-9a-fA-F]{4}$/.test(raw)) {
+            return `#${raw[1]}${raw[1]}${raw[2]}${raw[2]}${raw[3]}${raw[3]}`.toLowerCase();
+        }
+        return '';
     };
 
     const cssColorToHex = (value) => {
         const raw = String(value ?? '').trim();
         if (!raw) return '';
 
-        const normalized = normalizeOptionalCssColor(raw);
-        if (/^#[0-9a-fA-F]{6}$/.test(normalized)) return normalized.toLowerCase();
-        if (/^#[0-9a-fA-F]{3}$/.test(normalized)) {
-            return `#${normalized[1]}${normalized[1]}${normalized[2]}${normalized[2]}${normalized[3]}${normalized[3]}`.toLowerCase();
-        }
-        if (/^#[0-9a-fA-F]{8}$/.test(normalized)) return normalized.slice(0, 7).toLowerCase();
+        const hex = normalizeHexColor(raw);
+        if (hex) return hex;
 
-        const rgbMatch = raw.match(/^rgba?\(\s*([+-]?\d*\.?\d+)(?:%?)\s*(?:,|\s)\s*([+-]?\d*\.?\d+)(?:%?)\s*(?:,|\s)\s*([+-]?\d*\.?\d+)/i);
+        const rgbMatch = raw.match(/^rgba?\(\s*([+-]?\d*\.?\d+%?)\s*(?:,|\s+)\s*([+-]?\d*\.?\d+%?)\s*(?:,|\s+)\s*([+-]?\d*\.?\d+%?)/i);
         if (rgbMatch) {
-            return `#${byteToHex(rgbMatch[1])}${byteToHex(rgbMatch[2])}${byteToHex(rgbMatch[3])}`;
+            return `#${byteToHex(channelToByte(rgbMatch[1]))}${byteToHex(channelToByte(rgbMatch[2]))}${byteToHex(channelToByte(rgbMatch[3]))}`;
         }
 
-        const srgbMatch = raw.match(/^color\(\s*srgb\s+([+-]?\d*\.?\d+)\s+([+-]?\d*\.?\d+)\s+([+-]?\d*\.?\d+)/i);
+        const srgbMatch = raw.match(/^color\(\s*srgb\s+([+-]?\d*\.?\d+%?)\s+([+-]?\d*\.?\d+%?)\s+([+-]?\d*\.?\d+%?)/i);
         if (srgbMatch) {
-            return `#${byteToHex(Number(srgbMatch[1]) * 255)}${byteToHex(Number(srgbMatch[2]) * 255)}${byteToHex(Number(srgbMatch[3]) * 255)}`;
+            const toSrgbByte = (channel) => {
+                const rawChannel = String(channel ?? '').trim();
+                const number = Number.parseFloat(rawChannel);
+                if (!Number.isFinite(number)) return 0;
+                return rawChannel.endsWith('%') ? number * 2.55 : number * 255;
+            };
+            return `#${byteToHex(toSrgbByte(srgbMatch[1]))}${byteToHex(toSrgbByte(srgbMatch[2]))}${byteToHex(toSrgbByte(srgbMatch[3]))}`;
         }
 
         return '';
     };
 
-    const resolveCssColorToHex = (value) => {
-        const direct = cssColorToHex(value);
+    const resolveCssColorToHex = (value, contextEl = null) => {
+        const raw = String(value ?? '').trim();
+        if (!raw || /^transparent$/i.test(raw)) return '';
+
+        const direct = cssColorToHex(raw);
         if (direct) return direct;
+
+        if (/^currentColor$/i.test(raw) && contextEl instanceof Element) {
+            return cssColorToHex(getComputedStyle(contextEl).color);
+        }
+
         if (!document.body) return '';
 
         const probe = document.createElement('span');
@@ -704,56 +733,17 @@ export function initDisplaySettingsTab() {
         probe.style.height = '0';
         probe.style.overflow = 'hidden';
         probe.style.pointerEvents = 'none';
-        probe.style.color = String(value ?? '').trim();
-        document.body.appendChild(probe);
+        probe.style.color = raw;
+        const host = contextEl instanceof HTMLElement ? contextEl : document.body;
+        host.appendChild(probe);
         const resolved = cssColorToHex(getComputedStyle(probe).color);
         probe.remove();
         return resolved;
     };
 
-    const readThemeColor = (varName) => resolveCssColorToHex(`var(${varName})`);
-
-    const readComputedColor = (selectors) => {
-        const chatEl = document.getElementById('chat');
-        if (!chatEl) return '';
-        for (const selector of selectors) {
-            const elements = Array.from(chatEl.querySelectorAll(selector));
-            for (let i = elements.length - 1; i >= 0; i -= 1) {
-                const el = elements[i];
-                if (!(el instanceof HTMLElement)) continue;
-                const style = getComputedStyle(el);
-                if (style.display === 'none' || style.visibility === 'hidden') continue;
-                const color = cssColorToHex(style.color);
-                if (color) return color;
-            }
-        }
-        return '';
-    };
-
-    const readCurrentReadingColors = () => {
-        const readingStyleActive = Boolean(document.getElementById('nytw-reading-style'));
-        return {
-            bodyTextColor: (readingStyleActive ? '' : readComputedColor(['.mes_text']))
-                || readThemeColor('--SmartThemeBodyColor'),
-            dialogueTextColor: (readingStyleActive ? '' : readComputedColor(['.mes_text q', '.mes_text .ny-dialogue', '.mes_text .Ny-font-manager']))
-                || readThemeColor('--SmartThemeQuoteColor'),
-        };
-    };
-
-    const fillCurrentReadingColors = () => {
-        const colors = readCurrentReadingColors();
-        let changed = false;
-
-        if (!normalizeOptionalCssColor(settings.bodyTextColor) && colors.bodyTextColor) {
-            settings.bodyTextColor = colors.bodyTextColor;
-            changed = true;
-        }
-        if (!normalizeOptionalCssColor(settings.dialogueTextColor) && colors.dialogueTextColor) {
-            settings.dialogueTextColor = colors.dialogueTextColor;
-            changed = true;
-        }
-
-        return changed;
+    const colorTextToPickerValue = (value, fallback = READING_COLOR_PICKER_FALLBACK, contextEl = null) => {
+        const raw = normalizeOptionalCssColor(value);
+        return resolveCssColorToHex(raw, contextEl) || fallback;
     };
 
     const bindOptionalTextInput = (inputEl, getValue, setValue, normalizeFn) => {
@@ -788,14 +778,14 @@ export function initDisplaySettingsTab() {
         });
     };
 
-    const bindOptionalColorInput = (textEl, pickerEl, getValue, setValue) => {
+    const bindOptionalColorInput = (textEl, pickerEl, getValue, setValue, colorKey) => {
         if (textEl instanceof HTMLInputElement) {
             textEl.value = String(getValue() || '');
             textEl.addEventListener('input', () => {
                 const normalized = normalizeOptionalCssColor(textEl.value);
                 setValue(normalized);
                 if (pickerEl instanceof HTMLInputElement && /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(normalized)) {
-                    pickerEl.value = colorTextToPickerValue(normalized);
+                    pickerEl.value = colorTextToPickerValue(normalized, getReadingColorFallback(colorKey));
                 }
                 debouncedSaveAndApplyTypography();
             });
@@ -803,14 +793,14 @@ export function initDisplaySettingsTab() {
                 const normalized = normalizeOptionalCssColor(textEl.value);
                 setValue(normalized);
                 textEl.value = normalized;
-                if (pickerEl instanceof HTMLInputElement) pickerEl.value = colorTextToPickerValue(normalized);
                 saveSettingsDebounced();
                 applyTypographyVariables();
                 syncReadingStylePreview();
+                syncReadingColorControls();
             });
         }
         if (pickerEl instanceof HTMLInputElement) {
-            pickerEl.value = colorTextToPickerValue(getValue());
+            pickerEl.value = colorTextToPickerValue(getValue(), getReadingColorFallback(colorKey));
             pickerEl.addEventListener('input', () => {
                 const normalized = normalizeOptionalCssColor(pickerEl.value);
                 setValue(normalized);
@@ -845,8 +835,136 @@ export function initDisplaySettingsTab() {
     const colorControlBindings = [
         { textEl: overallTextColorEl, pickerEl: overallTextColorPickerEl, key: 'overallTextColor' },
         { textEl: bodyTextColorEl, pickerEl: bodyTextColorPickerEl, key: 'bodyTextColor' },
+        { textEl: italicTextColorEl, pickerEl: italicTextColorPickerEl, key: 'italicTextColor' },
         { textEl: dialogueTextColorEl, pickerEl: dialogueTextColorPickerEl, key: 'dialogueTextColor' },
     ];
+
+    const readingColorSelectors = {
+        overallTextColor: ['.mes_text:not(.nytw-stream-buffer)', '.mes_text'],
+        bodyTextColor: ['.mes_text:not(.nytw-stream-buffer)', '.mes_text'],
+        italicTextColor: [
+            '.mes_text:not(.nytw-stream-buffer) i',
+            '.mes_text:not(.nytw-stream-buffer) em',
+            '.mes_text i',
+            '.mes_text em',
+        ],
+        dialogueTextColor: [
+            '.mes_text:not(.nytw-stream-buffer) .ny-dialogue',
+            '.mes_text:not(.nytw-stream-buffer) .custom-ny-dialogue',
+            '.mes_text:not(.nytw-stream-buffer) .Ny-font-manager',
+            '.mes_text:not(.nytw-stream-buffer) .custom-Ny-font-manager',
+            '.mes_text:not(.nytw-stream-buffer) q',
+            '.mes_text .ny-dialogue',
+            '.mes_text .custom-ny-dialogue',
+            '.mes_text .Ny-font-manager',
+            '.mes_text .custom-Ny-font-manager',
+            '.mes_text q',
+        ],
+    };
+
+    const readingColorThemeVars = {
+        overallTextColor: '--SmartThemeBodyColor',
+        bodyTextColor: '--SmartThemeBodyColor',
+        italicTextColor: '--SmartThemeEmColor',
+        dialogueTextColor: '--SmartThemeQuoteColor',
+    };
+
+    const readElementColor = (el) => {
+        if (!(el instanceof HTMLElement)) return '';
+        const style = getComputedStyle(el);
+        if (style.display === 'none' || style.visibility === 'hidden') return '';
+        return cssColorToHex(style.color);
+    };
+
+    const readExistingReadingColor = (key) => {
+        const chatEl = document.getElementById('chat');
+        if (!(chatEl instanceof HTMLElement)) return '';
+
+        for (const selector of readingColorSelectors[key] || []) {
+            const elements = Array.from(chatEl.querySelectorAll(selector));
+            for (let i = elements.length - 1; i >= 0; i -= 1) {
+                const color = readElementColor(elements[i]);
+                if (color) return color;
+            }
+        }
+
+        return '';
+    };
+
+    const readProbeReadingColor = (key) => {
+        const chatEl = document.getElementById('chat');
+        if (!(chatEl instanceof HTMLElement)) return '';
+
+        const mesEl = document.createElement('div');
+        mesEl.className = 'mes';
+        mesEl.setAttribute('aria-hidden', 'true');
+        mesEl.style.position = 'absolute';
+        mesEl.style.left = '-9999px';
+        mesEl.style.top = '-9999px';
+        mesEl.style.width = '0';
+        mesEl.style.height = '0';
+        mesEl.style.overflow = 'hidden';
+        mesEl.style.opacity = '0';
+        mesEl.style.pointerEvents = 'none';
+
+        const mesTextEl = document.createElement('div');
+        mesTextEl.className = 'mes_text';
+        mesEl.appendChild(mesTextEl);
+
+        let targetEl = mesTextEl;
+        if (key === 'italicTextColor') {
+            targetEl = document.createElement('em');
+            targetEl.textContent = 'x';
+            mesTextEl.appendChild(targetEl);
+        } else if (key === 'dialogueTextColor') {
+            targetEl = document.createElement('q');
+            targetEl.className = 'ny-dialogue';
+            targetEl.textContent = 'x';
+            mesTextEl.appendChild(targetEl);
+        } else {
+            mesTextEl.textContent = 'x';
+        }
+
+        chatEl.appendChild(mesEl);
+        const color = readElementColor(targetEl);
+        mesEl.remove();
+        return color;
+    };
+
+    const readThemeColor = (key) => {
+        const varName = readingColorThemeVars[key];
+        if (!varName || !document.body) return '';
+        const host = document.getElementById('chat') || document.body;
+        return resolveCssColorToHex(`var(${varName})`, host);
+    };
+
+    const readBodyColor = () => {
+        if (!document.body) return '';
+        return cssColorToHex(getComputedStyle(document.body).color);
+    };
+
+    const getReadingColorFallback = (key) => (
+        readExistingReadingColor(key)
+        || readProbeReadingColor(key)
+        || readThemeColor(key)
+        || readBodyColor()
+        || READING_COLOR_PICKER_FALLBACK
+    );
+
+    const syncReadingColorControls = ({ syncTextValues = false } = {}) => {
+        for (const binding of colorControlBindings) {
+            const value = normalizeOptionalCssColor(settings[binding.key]);
+            const fallback = getReadingColorFallback(binding.key);
+
+            if (binding.textEl instanceof HTMLInputElement) {
+                if (syncTextValues) binding.textEl.value = value;
+                binding.textEl.placeholder = `继承 / ${fallback}`;
+            }
+            if (binding.pickerEl instanceof HTMLInputElement) {
+                binding.pickerEl.value = colorTextToPickerValue(value, fallback);
+            }
+        }
+    };
 
     const selectControlBindings = [
         { el: overallFontWeightEl, key: 'overallFontWeight', normalize: normalizeOptionalFontWeight },
@@ -893,11 +1011,7 @@ export function initDisplaySettingsTab() {
         for (const binding of numberControlBindings) {
             setInputValue(binding.el, normalizeReadingStyleValue(binding.key, settings[binding.key]));
         }
-        for (const binding of colorControlBindings) {
-            const value = normalizeOptionalCssColor(settings[binding.key]);
-            if (binding.textEl instanceof HTMLInputElement) binding.textEl.value = value;
-            if (binding.pickerEl instanceof HTMLInputElement) binding.pickerEl.value = colorTextToPickerValue(value);
-        }
+        syncReadingColorControls({ syncTextValues: true });
         for (const binding of selectControlBindings) {
             setSelectValue(binding.el, binding.normalize(settings[binding.key]));
         }
@@ -928,6 +1042,7 @@ export function initDisplaySettingsTab() {
         readingPreviewEl.classList.toggle('is-disabled', !enabled);
 
         const bodyEl = readingPreviewEl.querySelector('.nytw-reading-preview-body');
+        const italicEl = readingPreviewEl.querySelector('.nytw-reading-preview-italic');
         const dialogueEl = readingPreviewEl.querySelector('.nytw-reading-preview-dialogue');
         if (!(bodyEl instanceof HTMLElement) || !(dialogueEl instanceof HTMLElement)) return;
 
@@ -939,6 +1054,7 @@ export function initDisplaySettingsTab() {
         const bodyTextIndent = firstResolved(settings.bodyTextIndent, settings.overallTextIndent);
         const bodyFontWeight = firstResolved(settings.bodyFontWeight, settings.overallFontWeight);
         const bodyFontStyle = firstResolved(settings.bodyFontStyle, settings.overallFontStyle);
+        const italicColor = firstResolved(settings.italicTextColor, bodyColor);
 
         const dialogueFontSize = firstResolved(settings.dialogueFontSize, bodyFontSize);
         const dialogueLetterSpacing = firstResolved(settings.dialogueLetterSpacing, bodyLetterSpacing);
@@ -957,6 +1073,7 @@ export function initDisplaySettingsTab() {
         setPreviewStyle(bodyEl, 'text-indent', enabled ? bodyTextIndent : null, 'em');
         setPreviewStyle(bodyEl, 'font-weight', enabled ? bodyFontWeight : null);
         setPreviewStyle(bodyEl, 'font-style', enabled ? bodyFontStyle : null);
+        setPreviewStyle(italicEl, 'color', enabled ? italicColor : null);
 
         setPreviewStyle(dialogueEl, 'font-size', enabled ? dialogueFontSize : null, 'px');
         setPreviewStyle(dialogueEl, 'letter-spacing', enabled ? dialogueLetterSpacing : null, 'em');
@@ -983,6 +1100,7 @@ export function initDisplaySettingsTab() {
             overallLetterSpacing: null,
             overallLineHeight: null,
             overallTextColor: '',
+            italicTextColor: '',
             overallParagraphSpacing: null,
             overallTextIndent: null,
             overallFontWeight: '',
@@ -1008,7 +1126,6 @@ export function initDisplaySettingsTab() {
             localeFontSize: null,
             localeLetterSpacing: null,
         });
-        if (keepEnabled) fillCurrentReadingColors();
         applyReadingStyleNow();
         notify('success', '阅读样式已重置。');
     };
@@ -1322,10 +1439,6 @@ export function initDisplaySettingsTab() {
     syncStreamAnimUi();
     syncTextAnimUi();
     normalizeReadingStylePresets();
-    if (settings.readingStyleEnabled === true && fillCurrentReadingColors()) {
-        saveSettingsDebounced();
-        applyTypographyVariables();
-    }
     syncReadingStyleControls();
     syncTypographyVisibility();
     syncTypographyPlaceholders();
@@ -1538,8 +1651,6 @@ export function initDisplaySettingsTab() {
     // Reading style controls
     if (readingStyleEnabledEl instanceof HTMLInputElement) {
         readingStyleEnabledEl.addEventListener('change', () => {
-            const willEnable = readingStyleEnabledEl.checked;
-            if (willEnable && settings.readingStyleEnabled !== true) fillCurrentReadingColors();
             settings.readingStyleEnabled = readingStyleEnabledEl.checked;
             applyReadingStyleNow();
         });
@@ -1562,6 +1673,7 @@ export function initDisplaySettingsTab() {
             binding.pickerEl,
             () => settings[binding.key],
             (v) => { settings[binding.key] = v; },
+            binding.key,
         );
     }
 

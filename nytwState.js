@@ -58,6 +58,7 @@ export const DEFAULT_SETTINGS = {
     dialogueFontWeight: '',
     dialogueFontStyle: '',
     overallTextColor: '',
+    italicTextColor: '',
     overallParagraphSpacing: null,
     overallTextIndent: null,
     overallFontWeight: '',
@@ -338,6 +339,7 @@ function applyDefaultSettings() {
     settings.dialogueFontWeight = normalizeOptionalFontWeight(settings.dialogueFontWeight);
     settings.dialogueFontStyle = normalizeOptionalFontStyle(settings.dialogueFontStyle);
     settings.overallTextColor = normalizeOptionalCssColor(settings.overallTextColor);
+    settings.italicTextColor = normalizeOptionalCssColor(settings.italicTextColor);
     settings.overallParagraphSpacing = clampOptionalParagraphSpacing(settings.overallParagraphSpacing);
     settings.overallTextIndent = clampOptionalTextIndent(settings.overallTextIndent);
     settings.overallFontWeight = normalizeOptionalFontWeight(settings.overallFontWeight);
